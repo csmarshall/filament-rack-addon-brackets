@@ -1,0 +1,28 @@
+name: Blueprint
+
+# Redraws shared-wall-bracket/blueprint.{svg,png} and its README embed whenever the bracket's model or drawing script changes,
+# using common-blueprint-generator's reusable workflow. The layout is hand-placed in make_blueprint.py (section A-A, chain dimensions),
+# so it runs that script instead of the generator's CLI.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "shared-wall-bracket/shared_wall_bracket.py"
+      - "shared-wall-bracket/make_blueprint.py"
+      - "requirements.txt"
+      - ".github/workflows/blueprint.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  blueprint:
+    uses: csmarshall/common-blueprint-generator/.github/workflows/render.yml@main
+    with:
+      # cadquery brings its own OCP 7.9; the generator is installed without the ocp extra so it uses that one.
+      render-command: >-
+        uv venv -q .venv &&
+        uv pip install -q --python .venv -r requirements.txt "$BLUEPRINT_PACKAGE" &&
+        cd shared-wall-bracket && ../.venv/bin/python make_blueprint.py
+      commit-paths: shared-wall-bracket/blueprint.svg shared-wall-bracket/blueprint.png shared-wall-bracket/README.md
