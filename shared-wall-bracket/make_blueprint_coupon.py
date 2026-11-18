@@ -24,7 +24,7 @@ from shared_wall_bracket import Params, build_coupon, coupon_layout  # noqa: E40
 
 log = logging.getLogger("blueprint")
 
-SCALE = 3.0   # sheet mm per model mm: the coupon is small
+SCALE = 2.5   # sheet mm per model mm: the coupon is small
 DEFAULT_OUT = Path(__file__).with_name("blueprint_coupon")
 
 
@@ -50,7 +50,7 @@ def draw(p: Params, out_stem: Path) -> None:
     # Front: the +X face, with the bar socket face on. View x = model Y, view y = model Z.
     front = View.at_corner(sheet, project(solid.wrapped, (1, 0, 0), (0, 0, 1)), (x_left, 200.0), SCALE).draw()
     front.caption("FRONT (+X face)", "bar socket", below=24)
-    ys = [0.0, c.upright_y, c.bar_y, c.size_y]
+    ys = [0.0, c.upright_y, c.bar_y, c.slit_y, c.size_y]
     for a, b in zip(ys, ys[1:]):
         front.dim_h(a, b, 0, -9)
     front.dim_h(0, c.size_y, 0, -17)
@@ -58,6 +58,8 @@ def draw(p: Params, out_stem: Path) -> None:
     front.dim_v(0, c.bar_z, c.size_y, 17)
     x0, y0, x1, y1 = front.box()
     front.leader((c.bar_y + p.bore / 2 * 0.7, c.bar_z + p.bore / 2 * 0.7), (x1 + 12, y1 - 6), f"{fmt(p.bore)} dia, {fmt(p.bar_depth)} deep", ha="left")
+    front.leader((c.slit_y + p.tie_slit_mouth[1] / 2, c.slit_z + p.tie_slit_height / 2 * 0.5), (x1 + 12, y1 - 16),
+                 f"{fmt(p.tie_slit_height)} x {fmt(p.tie_slit_width)} tie slit, through", ha="left")
 
     # Top: the upright socket. View x = model Y, view y = -model X.
     top = View.at_corner(sheet, project(solid.wrapped, (0, 0, 1), (-1, 0, 0)), (x_left, 102.0), SCALE).draw()
@@ -70,27 +72,37 @@ def draw(p: Params, out_stem: Path) -> None:
     # Cutting planes, lettered on the top view (view x = model Y).
     sp.cut_line(sheet, top, (c.bar_y, -c.size_x - 4), (c.bar_y, 3), "A")
     sp.cut_line(sheet, top, (c.upright_y, -c.size_x - 4), (c.upright_y, 3), "B")
+    sp.cut_line(sheet, top, (c.slit_y, -c.size_x - 4), (c.slit_y, 3), "C")
 
     # Sections, right of the main views.
-    x_sec = x_left + c.size_y * SCALE + 70
+    x_sec = x_left + c.size_y * SCALE + 80
     a = section(sheet, solid, c.bar_y, (x_sec, 175.0), "SECTION A-A", "bar socket")
     a.dim_h(c.size_x - p.bar_depth, c.size_x, c.size_z, 6)
     a.dim_h(0, c.size_x - p.bar_depth, c.size_z, 6)
     a.dim_h(0, c.size_x, 0, -8)
     a.dim_v(0, c.size_z, 0, -8)
-    b = section(sheet, solid, c.upright_y, (x_sec + c.size_x * SCALE + 40, 175.0), "SECTION B-B", "upright socket")
+    b = section(sheet, solid, c.upright_y, (x_sec + c.size_x * SCALE + 25, 175.0), "SECTION B-B", "upright socket")
     b.dim_h(0, c.upright_x - p.bore / 2, c.size_z, 6)
     b.dim_h(c.upright_x + p.bore / 2, c.size_x, c.size_z, 6)
     b.dim_h(0, c.size_x, 0, -8)
     b.dim_v(c.size_z - c.upright_depth, c.size_z, c.size_x, 8)
     b.dim_v(0, c.size_z - c.upright_depth, c.size_x, 8)
+    s = section(sheet, solid, c.slit_y, (x_sec + 2 * (c.size_x * SCALE + 25), 175.0), "SECTION C-C", "tie slit")
+    mh = p.tie_slit_mouth[0]
+    s.dim_v(c.slit_z - p.tie_slit_height / 2, c.slit_z + p.tie_slit_height / 2, c.size_x / 2, 0, ext=False)   # inside the opening: its height
+    s.dim_v(c.slit_z - mh / 2, c.slit_z + mh / 2, c.size_x, 8)
+    s.dim_h(0, c.size_x, 0, -8)
+    s.leader((c.size_x - p.tie_slit_lead_in * 0.5, c.slit_z + p.tie_slit_height / 2 + p.tie_slit_lead_in * 0.5),
+             (float(s.origin[0]) + 2, float(s.to_sheet((0, c.size_z))[0][1]) + 12), f"{fmt(p.tie_slit_lead_in)} x 45 deg lead-in", ha="left")
 
     bh.finish(
         sheet, ctx, out_stem, DEFAULT_OUT, title="FIT TEST COUPON", number="FRB-005", source="shared-wall-bracket/shared_wall_bracket.py",
         for_="Tuning the socket fit before printing a bracket", material="As the brackets will be.", scale=SCALE, detail_scales=(),
         notes=[
-            f"One upright socket and one bar socket at production size: tube {fmt(p.tube_od)} dia plus {fmt(p.fit_clearance)} clearance gives {fmt(p.bore)} dia.",
+            f"One upright socket, one bar socket and one tie slit at production size: tube {fmt(p.tube_od)} dia plus {fmt(p.fit_clearance)} clearance gives {fmt(p.bore)} dia.",
             f"Bar socket {fmt(p.bar_depth)} deep, centred {fmt(c.bar_z)} up; upright socket {fmt(c.upright_depth)} deep from the top.",
+            f"Tie slit {fmt(p.tie_slit_height)} x {fmt(p.tie_slit_width)} with rounded ends and a {fmt(p.tie_slit_lead_in)} x 45 deg lead-in on both faces, through the {fmt(c.size_x)} thickness, "
+            "the same as on the brackets. Push a zip tie through it as well as the tubes into their sockets.",
             "Tune fit_clearance in shared_wall_bracket.py until a tube pushes in by hand and does not rock.",
             "Untested hobby design. No load rating. See DISCLAIMER.md.",
         ],

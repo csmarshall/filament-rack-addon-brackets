@@ -1,6 +1,6 @@
 """
 Drawing pieces the shared-wall bracket's blueprint sheets have in common (make_blueprint.py, make_blueprint_staggered.py,
-make_blueprint_end.py): the anchor detail and the section through a bar socket. Every view is projected from the CAD model and every number is
+make_blueprint_end.py): the face views, the section through a bar socket and the tie slit. Every view is projected from the CAD model and every number is
 read from the Params it was built from.
 """
 import cadquery as cq
@@ -8,74 +8,21 @@ import cadquery as cq
 from blueprint import View, fmt, project, section_loops
 from shared_wall_bracket import Params
 
-REAR_CUT_OVERRUN = 3.0   # model mm the cut line runs past the part, so its letters sit clear of the outline
-PLAN_MARGIN = 1.0   # model mm of leg shown ahead of the anchor in the plan section; it must stay clear of the last bar socket
 END_LABEL_DROP = 22.0   # sheet mm under a view where the end labels sit, clear of its dimension lines
 END_LABEL_SIZE = 5.0
 SLAB = 0.4          # thickness of the slice projected for a section, model mm
-
-
-def anchor_extent(p: Params) -> tuple[float, float]:
-    """(half the saddle's outer width, rearmost face of the saddle bar), the same numbers build_bracket uses."""
-    return p.tie_slot_width / 2 + p.saddle_leg, p.length + p.tie_slot_depth + p.saddle_bar
-
-
-def anchor_plan(sheet, p: Params, solid: cq.Solid, left: float, mid_y: float, scale: float, title: str) -> View:
-    """Plan section through the anchor at half the saddle height, enlarged: sheet x runs along the bracket (rear end at the right).
-
-    `left` is the sheet x of the section's left edge and `mid_y` the sheet y of the bracket's centre line."""
-    ox, top = anchor_extent(p)
-    half = p.thickness / 2
-    y0 = p.length - p.leg_length - PLAN_MARGIN
-    z = p.saddle_height / 2
-    reach = max(ox, half) + 1.0
-    slab = solid.intersect(cq.Solid.makeBox(2 * reach, top + 1.0 - y0, SLAB, pnt=cq.Vector(-reach, y0, z)))
-    proj = project(slab.wrapped, (0, 0, 1), (-1, 0, 0))   # view x = model Y, view y = -model X, as in the TOP views
-    proj.hidden = []
-    view = View(sheet, proj, (left - y0 * scale, mid_y), scale)
-    view.draw()
-    view.hatch(section_loops(slab.wrapped, (0, y0, z + SLAB / 2), (0, 0, 1), (0, 1, 0)))
-    L, sd = p.length, p.tie_slot_depth
-    view.dim_h(L, L + sd, ox, 6)
-    view.dim_h(L + sd, top, ox, 6)
-    view.dim_v(-p.tie_slot_width / 2, p.tie_slot_width / 2, top, 6)
-    view.dim_v(-ox, ox, top, 15)
-    view.dim_v(-half, half, y0, -6)
-    view.caption(title, "back end, plan section", below=8)
-    return view
-
-
-def anchor_rear(sheet, p: Params, solid: cq.Solid, centre: tuple[float, float], scale: float, title: str) -> View:
-    """Rear view of the anchored bracket: the saddle's width and height. `centre` is the sheet position of the model's X=0, Z=0 point."""
-    ox, _ = anchor_extent(p)
-    proj = project(solid.wrapped, (0, 1, 0), (0, 0, 1))   # view x = -model X
-    view = View(sheet, proj, centre, scale).draw()
-    view.dim_h(-ox, ox, 0, -7)
-    view.dim_v(0, p.saddle_height, -ox, -10)
-    view.dim_v(0, p.height, -ox, -19)
-    cut_line(sheet, view, (-ox - REAR_CUT_OVERRUN, p.saddle_height / 2), (ox + REAR_CUT_OVERRUN, p.saddle_height / 2), "B")   # plane of the plan detail
-    view.caption(title, "rear end", below=14)
-    return view
-
-
-def anchor_notes(p: Params, plane: str = "B") -> str:
-    """The anchor's note line, from the same parameters."""
-    ox, _ = anchor_extent(p)
-    wide = "collar around the rear leg" if ox > p.thickness / 2 else "saddle on the rear end"
-    return (f"Anchor: {wide}, {fmt(p.saddle_height)} high, {fmt(p.saddle_leg)} legs, {fmt(p.saddle_bar)} bar behind a {fmt(p.tie_slot_width)} x "
-            f"{fmt(p.tie_slot_depth)} tie slot. Zip tie runs through the slot and round a tube or to the wall plate. "
-            f"Detail {plane} is cut {fmt(p.saddle_height / 2)} above the flat edge.")
+SLIT_DETAIL_PAD = 2.5   # model mm of plastic shown round the slit's mouth in its detail
+SLIT_NOTE_DROP = 14.0   # sheet mm above a face view where the slit callout sits, level with the socket callout
 
 
 def end_labels(sheet, view: View, p: Params, flip: bool = False, drop: float = END_LABEL_DROP) -> None:
     """Name the two ends of the bracket `drop` sheet mm under a view that shows its length: the FRONT END is Y = 0, which faces the room when the rack
-    stands against the wall, and the BACK END is Y = length, where the anchor is. `flip` is for a view from the -X side, where Y runs right to left."""
+    stands against the wall, and the BACK END is Y = length, against the wall. `flip` is for a view from the -X side, where Y runs right to left."""
     x0, y0, x1, y1 = view.box()
     y = y0 - drop
     front_x = float(view.to_sheet((-0.0, 0))[0][0])
     back_x = float(view.to_sheet((-p.length if flip else p.length, 0))[0][0])
-    back = "BACK END (anchor)" if p.anchor else "BACK END"
-    a, b = ("FRONT END", back) if not flip else (back, "FRONT END")
+    a, b = ("FRONT END", "BACK END") if not flip else ("BACK END", "FRONT END")
     sheet.text(min(front_x, back_x), y, a, END_LABEL_SIZE, ha="left", va="center", weight="bold")
     sheet.text(max(front_x, back_x), y, b, END_LABEL_SIZE, ha="right", va="center", weight="bold")
 
@@ -98,15 +45,15 @@ def face_view(sheet, p: Params, solid: cq.Solid, left: float, base: float, face:
     view.dim_h(pts[0], pts[-1], 0, -17)
     x0, y0, x1, y1 = view.box()
     if full:
-        clear = (anchor_extent(p)[1] - L) * scale if p.anchor else 0.0   # keep the dimensions clear of an anchor behind the rear end
         view.dim_h(f(0), f(G), H, 7)
-        view.dim_v(0, H, f(L), (9 + clear) * face)
-        view.dim_v(0, R, f(L), (17 + clear) * face)
+        view.dim_v(0, H, f(L), 9 * face)
+        view.dim_v(0, R, f(L), 17 * face)
         view.leader((f(G + p.corner_radius * 0.29), R + p.corner_radius * 0.29), (x0 + 14, y1 + 14), f"R{fmt(p.corner_radius)}")
     if ys:
         y = ys[min(1, len(ys) - 1)]
         view.leader((f(y) + p.bore / 2 * 0.7, p.bar_z + p.bore / 2 * 0.7), (x0 + 100, y1 + 14),
                     f"{len(ys)}x {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep on this face")
+    slit_leader(view, p, flip=face < 0)
     view.caption(title, detail, below=21)
     end_labels(sheet, view, p, flip=face < 0)
     return view
@@ -141,3 +88,62 @@ def cut_line(sheet, view: View, a: tuple, b: tuple, letter: str) -> None:
     for q, other in ((pa, pb), (pb, pa)):
         d = (q - other) / max(float(((q - other) ** 2).sum() ** 0.5), 1e-9)
         sheet.text(q[0] + d[0] * 2.5, q[1] + d[1] * 2.5, letter, 7, ha="center", va="center", weight="bold")
+
+
+def slit_text(p: Params) -> str:
+    """The slit callout, from the same parameters the slits are cut from."""
+    return f"{len(p.tie_slit_ys)}x {fmt(p.tie_slit_height)} x {fmt(p.tie_slit_width)} tie slit"
+
+
+def slit_leader(view: View, p: Params, flip: bool = False) -> None:
+    """Call out the tie slit on a face view, from the top of the right-most slit to text above the view."""
+    if not p.tie_slit_ys:
+        return
+    y = max(p.tie_slit_ys, key=lambda v: -v if flip else v)
+    x_view = -y if flip else y
+    x0, y0, x1, y1 = view.box()
+    at = float(view.to_sheet((x_view, 0))[0][0])
+    view.leader((x_view, p.tie_slit_z + p.tie_slit_mouth[0] / 2), (at - 3, y1 + SLIT_NOTE_DROP), slit_text(p))
+
+
+def slit_position_dims(view: View, p: Params, offset: float = -9.0) -> None:
+    """Dimension where the slits are along the length, under a top view (view x = model Y): from the front end to the first slit, between the
+    slits, and from the last slit to the back end. The extension lines drop from the part's edge, over the slit's hidden outline."""
+    half = p.thickness / 2
+    pts = [0.0, *p.tie_slit_ys, p.length]
+    for a, b in zip(pts, pts[1:]):
+        view.dim_h(a, b, -half, offset)
+
+
+def slit_detail(sheet, p: Params, solid: cq.Solid, corner: tuple[float, float], scale: float, title: str, callout: bool = True) -> View:
+    """The first tie slit seen face on, enlarged, with its size and lead-in. The projection is of the part cut down to a window round the slit, so
+    its outline is the window's. `corner` is the sheet position of the window's lower-left corner."""
+    y, zc = p.tie_slit_ys[0], p.tie_slit_z
+    mh, mw = p.tie_slit_mouth
+    y0, y1 = y - mw / 2 - SLIT_DETAIL_PAD, y + mw / 2 + SLIT_DETAIL_PAD
+    z0, z1 = zc - mh / 2 - SLIT_DETAIL_PAD, zc + mh / 2 + SLIT_DETAIL_PAD
+    reach = p.thickness / 2 + 1.0
+    window = solid.intersect(cq.Solid.makeBox(2 * reach, y1 - y0, z1 - z0, pnt=cq.Vector(-reach, y0, z0)))
+    proj = project(window.wrapped, (1, 0, 0), (0, 0, 1))   # view x = model Y, view y = model Z
+    proj.hidden = []
+    view = View.at_corner(sheet, proj, corner, scale).draw(centre_marks=False)
+    side = (mw / 2 + SLIT_DETAIL_PAD) * scale
+    view.dim_v(zc - p.tie_slit_height / 2, zc + p.tie_slit_height / 2, y, side + 6)
+    view.dim_v(zc - mh / 2, zc + mh / 2, y, side + 15)
+    view.dim_h(y - p.tie_slit_width / 2, y + p.tie_slit_width / 2, zc, 0, ext=False)
+    lead = f"{fmt(p.tie_slit_lead_in)} x 45 deg lead-in"
+    if callout:
+        bx, by = view.to_sheet((y + mw / 2, zc + mh / 2 * 0.6))[0]
+        view.leader((y + mw / 2 - p.tie_slit_lead_in * 0.5, zc + p.tie_slit_height / 2 * 0.6 + p.tie_slit_lead_in * 0.3),
+                    (bx + 6, float(view.box()[3]) + 5), f"{lead}, both faces")
+        view.caption(title, f"{fmt(mw)} wide at the face", below=8)
+    else:   # a short caption for a sheet with no room for the callout
+        view.caption(title, lead, below=8)
+    return view
+
+
+def slit_notes(p: Params) -> str:
+    """The slits' note line, from the same parameters."""
+    return (f"Tie slits: {len(p.tie_slit_ys)} through the rail, face to face, {fmt(p.tie_slit_height)} x {fmt(p.tie_slit_width)} with rounded ends, "
+            f"{fmt(p.tie_slit_from_end)} from each end, {fmt(p.tie_slit_z)} above the flat edge, {fmt(p.tie_slit_lead_in)} x 45 deg lead-in on both faces. "
+            "Zip tie through either slit to the wall plate. The rail there is no weaker than at a bar socket (checked when the model is built).")
