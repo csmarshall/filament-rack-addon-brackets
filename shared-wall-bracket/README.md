@@ -211,7 +211,9 @@ Then, on the plate:
    the legs pointing up). No supports.
 2. **Rotate it 45 degrees** about the vertical and centre it. It only fits a
    270 mm bed corner to corner, one per plate.
-3. A 10 mm brim fits a 270 x 270 mm bed on every version.
+3. A 10 mm brim fits a 270 x 270 mm bed on every version except the anchored
+   staggered brackets, which use 5 mm (a 10 mm brim would leave only 3.9 mm to
+   the bed edge).
 
 The reasons for each value are in [Why these settings](#why-these-settings).
 The `.3mf` projects in `models/` carry all of this, but only when opened with
@@ -224,7 +226,7 @@ The `.3mf` projects in `models/` carry all of this, but only when opened with
 - Snapmaker U1 (270 x 270 mm bed): every version only fits rotated 45 degrees,
   one per plate. Clear to the bed edge: in line 21 mm (anchor 18 mm); staggered
   19 mm. The anchored staggered brackets are the tightest, 329 mm long: with
-  the 10 mm brim in their project files they clear the bed edge by 3.9 mm. The
+  the 5 mm brim in their project files they clear the bed edge by 8.9 mm. The
   end brackets clear it by 9.2 mm.
 - 5 wall loops with the Arachne wall generator, so the 1.85, 2.85 and 3.85 mm
   socket walls print as solid perimeters.
@@ -247,7 +249,7 @@ the Classic wall generator, 15% grid infill and 3 bottom shell layers.
 | Wall generator | Classic | Arachne | Varies line width to close the slivers a fixed-width wall would leave. |
 | Infill pattern | Grid | Gyroid | Documented. The [OrcaSlicer patterns page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_patterns.html) says grid's overlapping points may cause noise or artifacts, and describes gyroid as isotropic, with curved geometry that helps reduce warping. |
 | Bottom shell layers | 3 | 5 | Precaution, not documented behaviour. The [shells page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_top_bottom_shells.html) says more shell layers increase part strength. The specific aim is to make the 1.85 mm wall between the bed face and each bar socket print fully solid; check that in the slicer preview. |
-| Brim | Slicer default | Outer, 10 mm | A long ABS part lifts at the ends. The width is what fits inside the bed margin. |
+| Brim | Slicer default | Outer, 10 mm (5 mm on the anchored staggered brackets) | A long ABS part lifts at the ends. The width is what fits inside the bed margin. |
 
 With 5 wall loops the walls carry nearly all the load, so the infill choice is
 mostly about print reliability.
@@ -285,7 +287,8 @@ python3 ../tools/make_u1_project.py \
 The project selects the stock `Snapmaker U1 (0.4 nozzle)` printer, the
 `0.20mm Standard` process and `Generic ABS @U1 0.4 nozzle` in slot 1. It
 overrides wall loops (5), wall generator (Arachne), infill (15% gyroid) and
-bottom shell layers (5), and adds a 10 mm outer brim (`--brim-width`).
+bottom shell layers (5), and adds a 10 mm outer brim (`--brim-width`; 5 for the
+anchored staggered brackets).
 These settings are written both to the process and to the part itself.
 
 ## Interactive 3D view
