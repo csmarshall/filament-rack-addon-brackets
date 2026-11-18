@@ -29,7 +29,8 @@ purposes. They are not commercial products and not certified safety devices.
 The designs, models, source code and documentation are provided "AS IS",
 without warranty of any kind, express or implied, including but not limited to
 the warranties of merchantability, fitness for a particular purpose and
-noninfringement, as set out in the [MIT License](LICENSE).
+noninfringement, as set out in the [licences](LICENSE.md) that cover this
+repository.
 
 To the fullest extent permitted by law, the author and contributors are not
 liable for any claim, damages, injury, death, property damage or other loss

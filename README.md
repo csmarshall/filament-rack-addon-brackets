@@ -1,5 +1,9 @@
 # Filament rack add-on brackets
 
+[![Latest release](https://img.shields.io/github/v/release/csmarshall/filament-rack-addon-brackets)](https://github.com/csmarshall/filament-rack-addon-brackets/releases/latest)
+[![Designs: CC BY-NC-SA 4.0](https://img.shields.io/badge/designs-CC%20BY--NC--SA%204.0-lightgrey)](LICENSE.md)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-cs__marshall-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/cs_marshall)
+
 3D-printable add-on parts for the 9-tier, 54-spool modular 3D printer filament
 storage rack sold on Amazon as the
 [Hizypaixin 9-Tier 3D Printer Filament Storage Rack](https://www.amazon.com/dp/B0FFZ8SSQX)
@@ -40,11 +44,22 @@ regenerate.
 
 [View the shared-wall bracket in 3D](shared-wall-bracket/README.md#interactive-3d-view), or open any `.stl` under `shared-wall-bracket/models/` for GitHub's built-in viewer.
 
+## Download
+
+Each [release](https://github.com/csmarshall/filament-rack-addon-brackets/releases/latest)
+has two archives:
+
+- `...-print-files.zip`: the STL and 3MF files for every part, with the print
+  settings, disclaimer and licence. Take this one to print.
+- `...-source.zip`: everything in the repository, including the CAD scripts,
+  STEP exports and drawings.
+
 ## Print settings
 
-Each part's README has a table of the slicer settings to change from the
-defaults, with where to find each one. Start there if you import an STL: only
-the `.3mf` projects carry the settings, and only when opened as a project.
+[PRINT_SETTINGS.md](PRINT_SETTINGS.md) lists every slicer setting to change
+from the defaults, with where to find each one. Start there if you import an
+STL: only the `.3mf` projects carry the settings, and only when opened as a
+project. Each part's README has the same table with the reasons.
 
 - [Shared-wall bracket settings](shared-wall-bracket/README.md#settings-to-change-from-the-slicers-defaults)
 - [Anti-tip wall plate settings](anti-tip-wall-plate/README.md#printing)
@@ -56,6 +71,9 @@ the `.3mf` projects carry the settings, and only when opened as a project.
 | `shared-wall-bracket/` | Source, STL/STEP/3MF models and notes for the shared-wall bracket. |
 | `anti-tip-wall-plate/` | Source and STL/STEP models for the anti-tip wall plate. |
 | `tools/make_u1_project.py` | Packages an STL as a Snapmaker Orca project for the Snapmaker U1. |
+| `tools/make_release.py` | Builds the two release archives. |
+| `PRINT_SETTINGS.md` | Slicer settings for every part, in one place. |
+| `VERSION` | The hand-set major and minor version. |
 | `docs/claude-code-handoff.md` | Project brief with the bracket source inline. |
 
 ## Setup
@@ -65,6 +83,20 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## License
+## Versions
 
-MIT. See [LICENSE](LICENSE) and the [disclaimer](DISCLAIMER.md).
+Releases are numbered `MAJOR.MINOR.PATCH`. The patch number goes up
+automatically with every push to `main`. Major and minor are set by hand in
+the [`VERSION`](VERSION) file, for a change that alters how a part fits or is
+used.
+
+## Licence
+
+The designs are free to print and remix for non-commercial use, with credit:
+[CC BY-NC-SA 4.0](LICENSE-DESIGNS.md). **Selling these files, or prints made
+from them, needs permission.** The general-purpose tooling in `tools/` is
+[MIT](LICENSE-CODE). [LICENSE.md](LICENSE.md) says which file is under which.
+See also the [disclaimer](DISCLAIMER.md).
+
+If these parts saved you some filament or a toppled rack, you can
+[buy me a coffee](https://buymeacoffee.com/cs_marshall).
