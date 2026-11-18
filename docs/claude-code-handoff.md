@@ -192,7 +192,8 @@ class Params:
     chamfer: float = 0.8             # lead-in on socket mouths
     # Rounding is confined to plastic that carries no load: the four outer
     # vertical corners of the legs.  Every socket wall is left at full thickness.
-    plan_round: float = 10.0         # radius on the four outer vertical corners
+    plan_round: float = 20.0         # radius on the four outer vertical corners; half the
+                                     # thickness rounds each end off completely, like the stock part
     # Optional light break on the leg and inside-corner edges.  OFF by default:
     # the CAD kernel carries a fillet along every tangent edge, so it runs on
     # across the leg end and along the rail top and shaves 0.1-0.4 mm off the
@@ -256,14 +257,17 @@ class Params:
     def plan_round_used(self) -> float:
         """The corner radius actually cut.
 
-        Normally plan_round, reduced where needed to keep 3 mm around the
-        upright sockets.  The exception is a bracket whose upright socket sits
-        exactly half a thickness in from the end, like the stock part: its end
-        can be rounded off completely, because that round is concentric with
-        the socket and leaves the same wall all the way round."""
+        Half the thickness (or more) rounds each end off completely, as on the
+        stock bracket.  That is allowed when it leaves at least 2.5 mm around
+        the upright socket: the round's centre sits on the bracket's centre
+        line, half a thickness in from the end, so the thinnest plastic is
+        between the socket and the arc along that line.  Otherwise the radius
+        is reduced to keep 3 mm between the socket and the bracket's side."""
         half = self.thickness / 2
-        if abs(self.upright_from_end - half) < 0.01 and self.plan_round >= half - 0.01:
-            return half - 0.05          # a hair under half, so a sliver of flat end face remains
+        if self.plan_round >= half - 0.01:
+            wall = half - abs(half - self.upright_from_end) - self.bore / 2
+            if wall >= 2.5:
+                return half - 0.05      # a hair under half, so a sliver of flat end face remains
         return max(0.0, min(self.plan_round, half - self.bore / 2 - 3.0, self.leg_length - 2.0))
 
     @classmethod
@@ -365,15 +369,21 @@ def build_bracket(p: Params) -> cq.Workplane:
         profile = profile.lineTo(G, H)
     body = profile.lineTo(0, H).close().extrude(p.thickness / 2, both=True)
 
-    # Round the four outer vertical corners (the only full-height Z edges).
+    # Round the ends in plan (looking down).  The side profile is intersected
+    # with a rounded outline, which works for any radius, including one longer
+    # than the leg, where filleting the leg's own edges would fail.
     plan_round = p.plan_round_used
     if plan_round > 0:
         try:
-            corners = [e for e in body.edges("|Z").vals() if e.Length() > H - 0.5]
-            log.debug("rounding %d vertical corners at r=%.1f", len(corners), plan_round)
-            body = body.newObject(corners).fillet(plan_round)
+            outline = (
+                cq.Workplane("XY")
+                .box(p.thickness, L, H, centered=(True, False, False))
+                .edges("|Z").fillet(plan_round)
+            )
+            body = body.intersect(outline)
+            log.debug("ends rounded in plan at r=%.2f", plan_round)
         except Exception as exc:
-            log.error("Corner rounding failed, leaving corners square: %s", exc)
+            log.error("End rounding failed, leaving the ends square: %s", exc)
 
     # Break the top edges in one pass: the side and corner edges of each leg top, plus
     # the side-face edges down the inside corner curves.  One fillet call keeps
@@ -415,8 +425,13 @@ def build_bracket(p: Params) -> cq.Workplane:
         ox = p.tie_slot_width / 2 + leg                    # outer half-width of the saddle
         top = L + p.tie_slot_depth + p.saddle_bar          # rearmost face of the bar
         g, c = min(p.saddle_gusset, p.thickness / 2 - ox), p.saddle_corner
+        # The rear end is rounded, so the saddle's feet reach back into the
+        # bracket far enough to meet solid plastic across their whole width.
+        r_end = p.plan_round_used
+        reach = max(0.0, (ox + g) - (p.thickness / 2 - r_end))
+        back = 2.0 + (r_end - (max(r_end ** 2 - reach ** 2, 0.0)) ** 0.5 if r_end > 0 else 0.0)
         outline = [
-            (-ox - g, L - 2), (ox + g, L - 2), (ox + g, L), (ox, L + g),
+            (-ox - g, L - back), (ox + g, L - back), (ox + g, L), (ox, L + g),
             (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
             (-ox, L + g), (-ox - g, L),
         ]

@@ -24,16 +24,16 @@ up nine stock brackets and a set of uprights from the second kit.
 |---|---|---|
 | Size | 40 x 305 x 40 mm | 18 x 320 x 40 mm (the stock bracket's width) |
 | Rail height | 18 mm, as stock | 27 mm |
-| Ends | Square, corners rounded at 10 mm | Fully rounded around the upright sockets, as stock |
+| Ends | Fully rounded, a 20 mm radius across the whole width | Fully rounded around the upright sockets, as stock |
 | Bar sockets | 16 mm deep, as measured on the stock part; the two faces end to end with an 8 mm web between | 16 mm deep, as measured on the stock part; one face's set is shifted 16 mm along the bracket so the two pass side by side |
 | Columns | Line up front and back | Neighbouring columns stand 16 mm apart front to back |
 | Parts | One design, plus an anchor variant | A mirror-image pair, A and B; no anchor variant |
-| Solid volume | 231 cm3 | 138 cm3 |
-| Printed, estimated (ABS, 5 walls, 15% infill) | about 132 g | about 98 g |
+| Solid volume | 220 cm3 | 138 cm3 |
+| Printed, estimated (ABS, 5 walls, 15% infill) | about 129 g | about 98 g |
 | Rail bending strength, vertical | 1.00 | 1.01 |
 | Rail stiffness, vertical | 1.00 | 1.52 |
 | Rail stiffness, sideways | 1.00 | 0.14 |
-| Wall around upright sockets | 2.85 mm at the end, 13.85 mm at the sides | 2.85 mm all round, as stock |
+| Wall around upright sockets | 2.85 mm at the end, 10.6 mm at the sides | 2.85 mm all round, as stock |
 
 **Why the staggered rail is taller.** A shared wall carries two columns. The
 staggered rail is under half as wide as the in-line one, and bending strength
@@ -45,7 +45,7 @@ bars and tiers still line up with the stock walls.
 
 **Where the staggered bracket is not as strong.** Sideways it is much less
 stiff, and its upright sockets have the stock 2.85 mm wall all round where the
-in-line bracket has 13.85 mm at the sides. The bars brace the wall sideways and
+in-line bracket has 10.6 mm at the sides. The bars brace the wall sideways and
 the stock brackets work with that same wall, but the in-line bracket has more
 margin. These figures are section-property ratios, not test results; neither
 layout has been load tested.
@@ -122,9 +122,9 @@ isometric. Every view is projected from the CAD model, and the dimensions come
 from the same parameters, so the sheet matches what is printed. A vector copy
 is in [`blueprint.svg`](blueprint.svg).
 
-> The sheet currently shows the bar sockets as 18 mm deep with a 4 mm web.
-> The model now has 16 mm sockets, an 8 mm web and a 4 mm vent through the
-> web, to match the stock bracket.
+> The sheet currently shows the bar sockets as 18 mm deep with a 4 mm web, and
+> ends with 10 mm corners. The model now has 16 mm sockets, an 8 mm web, a 4 mm
+> vent through the web and fully rounded ends, to match the stock bracket.
 > Everything else on the sheet is current; it is due to be re-rendered.
 
 ## Design
@@ -141,8 +141,9 @@ one shares its leg height, bar socket position and divider.
   walls on every tier.
 - Bar positions and height match the stock bracket, because the far end of
   every bar sits in a stock bracket.
-- Outer vertical corners are rounded at 10 mm. No edge next to a socket mouth
-  is rounded, so every socket wall keeps its full thickness.
+- Seen from above, each end is rounded off completely, like the stock part: a
+  20 mm radius across the 40 mm width. The wall at the tip of the upright
+  socket is still 2.85 mm, and the bar sockets all open on the straight sides.
 
 ## Anchor variant
 
@@ -184,8 +185,7 @@ Then, on the plate:
    the legs pointing up). No supports.
 2. **Rotate it 45 degrees** about the vertical and centre it. It only fits a
    270 mm bed corner to corner, one per plate.
-3. Largest brim that fits a 270 x 270 mm bed: 10 mm for the in-line and
-   staggered brackets, 5 mm for the in-line anchor variant.
+3. A 10 mm brim fits a 270 x 270 mm bed on every version.
 
 The reasons for each value are in [Why these settings](#why-these-settings).
 The `.3mf` projects in `models/` carry all of this, but only when opened with
@@ -196,7 +196,7 @@ The `.3mf` projects in `models/` carry all of this, but only when opened with
 
 - Orientation: flat edge on the bed, no supports.
 - Snapmaker U1 (270 x 270 mm bed): every version only fits rotated 45 degrees,
-  one per plate. Clear to the bed edge: in line 17 mm (anchor 16 mm); staggered
+  one per plate. Clear to the bed edge: in line 21 mm (anchor 18 mm); staggered
   19 mm.
 - 5 wall loops with the Arachne wall generator, so the 1.85, 2.85 and 3.85 mm
   socket walls print as solid perimeters.
@@ -219,7 +219,7 @@ the Classic wall generator, 15% grid infill and 3 bottom shell layers.
 | Wall generator | Classic | Arachne | Varies line width to close the slivers a fixed-width wall would leave. |
 | Infill pattern | Grid | Gyroid | Documented. The [OrcaSlicer patterns page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_patterns.html) says grid's overlapping points may cause noise or artifacts, and describes gyroid as isotropic, with curved geometry that helps reduce warping. |
 | Bottom shell layers | 3 | 5 | Precaution, not documented behaviour. The [shells page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_top_bottom_shells.html) says more shell layers increase part strength. The specific aim is to make the 1.85 mm wall between the bed face and each bar socket print fully solid; check that in the slicer preview. |
-| Brim | Slicer default | Outer, 10 mm (5 mm on the anchor variant) | A long ABS part lifts at the ends. The width is what fits inside the bed margin. |
+| Brim | Slicer default | Outer, 10 mm | A long ABS part lifts at the ends. The width is what fits inside the bed margin. |
 
 With 5 wall loops the walls carry nearly all the load, so the infill choice is
 mostly about print reliability.
@@ -256,8 +256,7 @@ python3 ../tools/make_u1_project.py \
 The project selects the stock `Snapmaker U1 (0.4 nozzle)` printer, the
 `0.20mm Standard` process and `Generic ABS @U1 0.4 nozzle` in slot 1. It
 overrides wall loops (5), wall generator (Arachne), infill (15% gyroid) and
-bottom shell layers (5), and adds an outer brim sized to the bed margin (`--brim-width`): 10 mm, or 5 mm on
-the in-line anchor variant.
+bottom shell layers (5), and adds a 10 mm outer brim (`--brim-width`).
 These settings are written both to the process and to the part itself.
 
 ## Interactive 3D view
