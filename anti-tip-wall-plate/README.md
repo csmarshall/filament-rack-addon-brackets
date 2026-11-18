@@ -29,7 +29,12 @@ width pointing up). The layers then run unbroken through the plate and around
 the saddle. Printed flat on its back, a pull would try to peel the saddle off
 along a layer line.
 
-No supports. Use 4 or more wall loops; at this size that prints nearly solid.
+| Setting | Set it to | Where (tab / group) |
+|---|---|---|
+| Wall loops | **4 or more** | Strength / Walls |
+| Filament | **ABS, ASA or PETG. Not PLA.** | Filament slot |
+
+No supports. At this size, 4 wall loops print nearly solid.
 
 **Do not print it in PLA.** The tie keeps the plate under constant load, and
 PLA slowly deforms under constant load and softens when warm. Use PETG, ABS or

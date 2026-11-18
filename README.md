@@ -40,6 +40,15 @@ regenerate.
 
 [View the shared-wall bracket in 3D](shared-wall-bracket/README.md#interactive-3d-view), or open any `.stl` under `shared-wall-bracket/models/` for GitHub's built-in viewer.
 
+## Print settings
+
+Each part's README has a table of the slicer settings to change from the
+defaults, with where to find each one. Start there if you import an STL: only
+the `.3mf` projects carry the settings, and only when opened as a project.
+
+- [Shared-wall bracket settings](shared-wall-bracket/README.md#settings-to-change-from-the-slicers-defaults)
+- [Anti-tip wall plate settings](anti-tip-wall-plate/README.md#printing)
+
 ## Repository layout
 
 | Path | Contents |

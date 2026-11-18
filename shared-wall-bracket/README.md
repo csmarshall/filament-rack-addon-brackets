@@ -160,6 +160,40 @@ edge and adds 9.2 mm to the back of the bracket.
 
 ## Printing
 
+### Settings to change from the slicer's defaults
+
+If you **import** an STL, or import a `.3mf` instead of opening it as a
+project, none of these are set for you. Set them by hand. The location is
+where each one sits in Snapmaker Orca and OrcaSlicer.
+
+| Setting | Set it to | Where (tab / group) | U1 stock value |
+|---|---|---|---|
+| Wall loops | **5** | Strength / Walls | 2 |
+| Wall generator | **Arachne** | Quality / Wall generator | Classic |
+| Sparse infill pattern | **Gyroid** | Strength / Infill | Grid |
+| Sparse infill density | **15%** | Strength / Infill | 15% (unchanged) |
+| Bottom shell layers | **5** | Strength / Top/bottom shells | 3 |
+| Brim type | **Outer brim only** | Others / Brim | Auto |
+| Brim width | **5 to 10 mm** (see below) | Others / Brim | 5 mm |
+| Filament | **ABS, ASA or PETG. Not PLA.** | Filament slot | PLA |
+| Layer height | 0.20 mm | Quality / Layer height | 0.20 mm (unchanged) |
+
+Then, on the plate:
+
+1. Lay the part with its **flat edge on the bed** (the long straight edge, with
+   the legs pointing up). No supports.
+2. **Rotate it 45 degrees** about the vertical and centre it. It only fits a
+   270 mm bed corner to corner, one per plate.
+3. Largest brim that fits a 270 x 270 mm bed: 10 mm for the in-line and
+   staggered brackets, 5 mm for the in-line anchor variant.
+
+The reasons for each value are in [Why these settings](#why-these-settings).
+The `.3mf` projects in `models/` carry all of this, but only when opened with
+**File > Open Project**.
+
+### Notes
+
+
 - Orientation: flat edge on the bed, no supports.
 - Snapmaker U1 (270 x 270 mm bed): every version only fits rotated 45 degrees,
   one per plate. Clear to the bed edge: in line 17 mm (anchor 16 mm); staggered
