@@ -71,7 +71,8 @@ The stock bar sockets were first recorded as 18 mm deep; re-measured, they are
   checks this; keep that guarantee.
 - The shared uprights carry both columns, about double the stock load, and
   reviewers report these tubes buckling at 9 loaded tiers. Flag any change
-  that weakens the load path, and keep the wall-anchor variant.
+  that weakens the load path. The zip-tie slits on every bracket are sized by
+  a strength check (`check_tie_slit_strength`) that runs on every build; keep it.
 - Printer is a Snapmaker U1 on macOS. The part is 305 mm long; confirm the
   U1's build volume before assuming it fits, and add a split-in-two option
   with a mechanical joint if it doesn't fit diagonally.
@@ -119,8 +120,10 @@ Coordinate system (also the print orientation: flat edge on the bed):
     Y = length, front to back
     Z = height (direction the upright tubes run); z=0 is the flat edge
 
-The anchor variant adds a zip-tie saddle on the rear end face for tethering
-the rack to a wall plate.
+Every bracket has two zip-tie slits through its rail, face to face, for
+tethering the rack to a wall plate (see ../anti-tip-wall-plate).  They are
+sized so the rail is no weaker there than at its weakest bar socket;
+check_tie_slit_strength measures that on the model whenever a bracket is built.
 
 Two layouts are built.  In line (40 mm thick): the two faces' bar sockets sit
 end to end, and both columns line up front and back.  Staggered (18 mm thick
@@ -130,7 +133,7 @@ plastic, but the two columns stand 16 mm apart front to back.  The staggered bra
 and B, so a row can alternate them and zigzag instead of stepping back.
 
 End brackets (Params.end) are single-sided stand-ins for the stock bracket at
-either end of a row, built with the anchor.
+either end of a row.
 
 Usage:
     python3 shared_wall_bracket.py
@@ -143,9 +146,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import cadquery as cq
+from OCP.BRepGProp import BRepGProp
+from OCP.GProp import GProp_GProps
 
 LOG_FORMAT = "%(asctime)s %(levelname)-5s %(name)s: %(message)s"
 log = logging.getLogger("shared_wall_v2")
+
+SECTION_SLAB = 0.2         # thickness of the slice a cross-section is measured on, mm
+SECTION_TOLERANCE = 1e-6   # relative slack so equal sections are not failed by rounding
 
 
 @dataclass
@@ -206,14 +214,14 @@ class Params:
     # across the leg end and along the rail top and shaves 0.1-0.4 mm off the
     # walls at the socket mouths.  Cosmetic only; enable knowing that cost.
     edge_round: float = 0.0
-    anchor: bool = False             # add a zip-tie saddle on the rear end face
-    tie_slot_width: float = 13.0     # along X; clears a 7.6 mm tie and spans the upright socket
-    tie_slot_depth: float = 3.2      # along Y; clears a 1.9 mm thick tie
-    saddle_leg: float = 5.0          # thickness of each saddle leg (X)
-    saddle_bar: float = 6.0          # thickness of the bar the tie pulls on (Y)
-    saddle_height: float = 22.0      # how far the saddle runs up from the flat edge (Z)
-    saddle_gusset: float = 3.0       # 45 degree foot where each leg meets the bracket
-    saddle_corner: float = 2.0       # 45 degree break on the bar's outer corners
+    # Zip-tie slits: two obround slots through the rail, face to face, centred
+    # tie_slit_from_end from each end at half the rail height.  The size comes
+    # from the strength rule in check_tie_slit_strength.  0 height disables them.
+    tie_slit_height: float = 9.0     # along Z; the slit is rounded top and bottom
+    tie_slit_width: float = 3.2      # along Y; clears a 1.9 mm thick tie, and is the end-round diameter
+    tie_slit_lead_in: float = 0.8    # 45 degree lead-in on both faces, as on the sockets
+    tie_slit_from_end: float = 60.0  # slit centre from each end
+    tie_slit_min_wall: float = 3.0   # solid rail kept above and below the slit's mouth
 
     @property
     def bore(self) -> float:
@@ -222,6 +230,23 @@ class Params:
     @property
     def bar_z(self) -> float:
         return self.bar_edge_offset + self.tube_od / 2
+
+    @property
+    def tie_slit_z(self) -> float:
+        """Height of the slit centres: halfway up the rail."""
+        return self.rail_height / 2
+
+    @property
+    def tie_slit_ys(self) -> list:
+        """Slit centres along the length, the same distance from each end."""
+        if self.tie_slit_height <= 0:
+            return []
+        return [self.tie_slit_from_end, self.length - self.tie_slit_from_end]
+
+    @property
+    def tie_slit_mouth(self) -> tuple:
+        """(height, width) of a slit at the face, lead-in included."""
+        return self.tie_slit_height + 2 * self.tie_slit_lead_in, self.tie_slit_width + 2 * self.tie_slit_lead_in
 
     @property
     def divider(self) -> float:
@@ -315,7 +340,7 @@ class Params:
         stock 18 mm rail and fully rounded ends.  `side` is which end of the
         row it goes on, facing the rack: "left" puts the sockets on the face
         toward the row (+X), "right" on the other.  The two are mirror images
-        and are not interchangeable, because the anchor must stay at the back."""
+        and are not interchangeable."""
         if side not in ("left", "right"):
             raise ValueError("side must be 'left' or 'right'")
         base = cls(**kwargs)
@@ -349,16 +374,24 @@ class Params:
             raise ValueError("bracket is too thin to leave 2.5 mm either side of an upright socket")
         if self.edge_round > self.rail_height - (self.bar_z + self.bore / 2) - 2.0:
             raise ValueError("edge_round would thin the wall over a bar socket below 2 mm")
-        if self.anchor:
-            if self.tie_slot_width / 2 < self.bore / 2 + 0.2:
-                raise ValueError("tie_slot_width must be wider than the upright socket so the saddle legs miss it")
-            collar = self.tie_slot_width / 2 + self.saddle_leg - self.thickness / 2
-            if collar > 0:
-                last = max(self.bar_y_left + self.bar_y_right)
-                if last + self.bore / 2 + 1.0 > self.length - self.leg_length:
-                    raise ValueError("the anchor collar would cover the mouth of the last bar socket")
-            if self.saddle_height > self.height:
-                raise ValueError("saddle_height is taller than the bracket")
+        if self.tie_slit_height > 0:
+            mouth_h, mouth_w = self.tie_slit_mouth
+            if self.tie_slit_width > self.tie_slit_height:
+                raise ValueError("tie slit is wider than it is tall; it must be rounded top and bottom")
+            wall = (self.rail_height - mouth_h) / 2
+            if wall < self.tie_slit_min_wall:
+                raise ValueError(f"tie slit leaves {wall:.2f} mm of rail above and below its mouth; need >= {self.tie_slit_min_wall:g} mm")
+            for y in self.tie_slit_ys:
+                if not mouth_w / 2 + 1.5 < y < self.length - mouth_w / 2 - 1.5:
+                    raise ValueError(f"tie slit at y={y} is outside the bracket")
+                for centre in (self.upright_from_end, self.length - self.upright_from_end):
+                    if abs(y - centre) < self.bore / 2 + mouth_w / 2 + 1.5:
+                        raise ValueError(f"tie slit at y={y} runs into the upright socket at y={centre}")
+                for sign, ys in ((-1, self.bar_y_left), (1, self.bar_y_right)):
+                    if sign in self.bar_faces:
+                        for sy in ys:
+                            if abs(y - sy) < self.bore / 2 + mouth_w / 2 + 1.5:
+                                raise ValueError(f"tie slit at y={y} runs into the bar socket at y={sy}")
         # Bar sockets and upright sockets must not meet anywhere along the length.
         up_lo = self.upright_from_end - self.bore / 2
         up_hi = self.upright_from_end + self.bore / 2
@@ -376,11 +409,76 @@ def _cone(origin, direction, r_mouth: float, r_inner: float, depth: float) -> cq
     return cq.Workplane("XY").add(solid)
 
 
+def tie_slit_cutter(p: Params, y: float, z: float, thickness: float, x0: float | None = None) -> cq.Workplane:
+    """The solid a tie slit removes: an obround through-slot along X (rounded top and bottom), with a 45 degree lead-in pocket on each face.
+
+    The slit runs the full `thickness` from x = `x0` (default: the -X face of a bracket centred on x = 0).  The lead-in is the same slot, a
+    lead-in larger all round, narrowing at 45 degrees to the slit's own size."""
+    x0 = -thickness / 2 if x0 is None else x0
+    lead = p.tie_slit_lead_in
+    h, w = p.tie_slit_height, p.tie_slit_width
+    overrun = 1.0                                   # the through-slot starts and ends clear of the faces
+    core = cq.Workplane("YZ", origin=(x0 - overrun, 0, 0)).center(y, z).slot2D(h, w, 90).extrude(thickness + 2 * overrun)
+    for x_face, direction in (((x0, 1), (x0 + thickness, -1)) if lead > 0 else ()):   # no lead-in pocket if there is no lead-in
+        mouth = (cq.Workplane("YZ", origin=(x_face, 0, 0)).center(y, z) if direction > 0
+                 else cq.Workplane("ZY", origin=(x_face, 0, 0)).center(z, y))
+        mouth = mouth.slot2D(h + 2 * lead, w + 2 * lead, 90 if direction > 0 else 0).extrude(lead, taper=45)
+        core = core.union(mouth)
+    return core
+
+
+def _section_properties(body: cq.Workplane, y: float, thickness: float, height: float) -> tuple:
+    """(area, vertical second moment, sideways second moment) of the body's cross-section at length position y, from a thin slab.
+
+    The moments are about the section's own centroid: vertical is bending about X (resisting a load along Z), sideways about Z. They come from
+    the inertia matrix of the slab divided by its thickness, which for a slab this thin is the section's own second moment."""
+    slab = cq.Workplane("XY").box(thickness + 2, SECTION_SLAB, height + 2).translate((0, y, height / 2))
+    solid = body.intersect(slab).val()
+    props = GProp_GProps()
+    BRepGProp.VolumeProperties_s(solid.wrapped, props)
+    inertia = props.MatrixOfInertia()
+    return props.Mass() / SECTION_SLAB, inertia.Value(1, 1) / SECTION_SLAB, inertia.Value(3, 3) / SECTION_SLAB
+
+
+def tie_slit_strength(p: Params, body: cq.Workplane) -> dict:
+    """The numbers the slit size rule compares: the weakest bar-socket section and the section through a slit, each as (area, vertical I,
+    sideways I), plus the wall left above and below the slit's mouth."""
+    socket_ys = sorted({y for sign, ys in ((-1, p.bar_y_left), (1, p.bar_y_right)) if sign in p.bar_faces for y in ys})
+    sockets = [_section_properties(body, y, p.thickness, p.height) for y in socket_ys]
+    weakest = tuple(min(s[i] for s in sockets) for i in range(3))
+    slits = [_section_properties(body, y, p.thickness, p.height) for y in p.tie_slit_ys]
+    slit = tuple(min(s[i] for s in slits) for i in range(3))
+    return {"socket": weakest, "slit": slit, "wall": (p.rail_height - p.tie_slit_mouth[0]) / 2}
+
+
+def check_tie_slit_strength(p: Params, body: cq.Workplane) -> None:
+    """Fail the build if a tie slit weakens the rail: its cross-section must be no weaker than the weakest bar-socket section in area, vertical
+    second moment and sideways second moment, and must keep tie_slit_min_wall of solid rail above and below its mouth.
+
+    This is section properties only.  It says nothing about the stress concentration at the slit's ends, and nothing here is load tested."""
+    if not p.tie_slit_ys:
+        return
+    r = tie_slit_strength(p, body)
+    names = ("area (mm^2)", "vertical I (mm^4)", "sideways I (mm^4)")
+    log.info("Tie slit check, %.1f x %.1f mm slit: wall above and below %.2f mm (need >= %.1f)", p.tie_slit_height, p.tie_slit_width,
+             r["wall"], p.tie_slit_min_wall)
+    failed = []
+    for name, sock, slit in zip(names, r["socket"], r["slit"]):
+        ok = slit >= sock * (1 - SECTION_TOLERANCE)
+        log.info("  %-18s weakest bar socket %9.1f   slit %9.1f   %s", name, sock, slit, "ok" if ok else "TOO WEAK")
+        if not ok:
+            failed.append(name)
+    if r["wall"] < p.tie_slit_min_wall:
+        failed.append("wall above and below")
+    if failed:
+        raise ValueError(f"the {p.tie_slit_height:g} mm tie slit weakens the rail: {', '.join(failed)}")
+
+
 def build_bracket(p: Params) -> cq.Workplane:
     """Build the double-sided end frame from the stock side profile."""
     p.validate()
-    log.info("Building bracket: %.1f x %.1f x %.1f mm (X x Y x Z), anchor=%s",
-             p.thickness, p.length, p.height, p.anchor)
+    log.info("Building bracket: %.1f x %.1f x %.1f mm (X x Y x Z), tie slits at y=%s",
+             p.thickness, p.length, p.height, p.tie_slit_ys)
     log.info("Upright divider %.1f mm, bar-socket centre web %.1f mm", p.divider, p.web)
     log.debug("bore=%.2f bar_z=%.2f bar_y=%s", p.bore, p.bar_z, p.bar_y)
 
@@ -443,57 +541,6 @@ def build_bracket(p: Params) -> cq.Workplane:
         except Exception as exc:
             log.error("Top-edge rounding failed, leaving those edges sharp: %s", exc)
 
-    # Optional tie saddle on the rear end face, in the style of a furniture
-    # anti-tip kit: a zip tie runs through the saddle and through a matching
-    # plate on the wall (see ../anti-tip-wall-plate).  The saddle is one profile
-    # extruded up from the bed, so the layers run unbroken through both legs and
-    # the bar, and a pull toward the wall loads the plastic along the layers.
-    # The slot is wider than the upright socket, so both saddle legs join solid
-    # plastic either side of the socket and not the thin wall behind it.
-    if p.anchor:
-        ox = p.tie_slot_width / 2 + p.saddle_leg           # outer half-width of the saddle
-        top = L + p.tie_slot_depth + p.saddle_bar          # rearmost face of the bar
-        c = p.saddle_corner
-        half = p.thickness / 2
-        if ox <= half:
-            # Wide bracket: the saddle stands on the rear end face, with 45
-            # degree feet.  The end is rounded, so the feet reach back into the
-            # bracket far enough to meet solid plastic across their whole width.
-            g = min(p.saddle_gusset, half - ox)
-            r_end = p.plan_round_used
-            reach = max(0.0, (ox + g) - (half - r_end))
-            back = 2.0 + (r_end - (max(r_end ** 2 - reach ** 2, 0.0)) ** 0.5 if r_end > 0 else 0.0)
-            outline = [
-                (-ox - g, L - back), (ox + g, L - back), (ox + g, L), (ox, L + g),
-                (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
-                (-ox, L + g), (-ox - g, L),
-            ]
-        else:
-            # Thin bracket: the saddle is wider than the bracket, so it becomes
-            # a collar around the whole rear leg.  The collar runs the length of
-            # the leg, so the tie's pull goes into the leg through both of its
-            # sides and not through the thin wall behind the upright socket.
-            # It starts at the leg, clear of the last bar socket, and widens
-            # over a 45 degree ramp.
-            d = ox - half
-            outline = [
-                (-half, L - G), (half, L - G), (ox, L - G + d),
-                (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
-                (-ox, L - G + d),
-            ]
-        # With no feet (g == 0) some points coincide; drop the repeats.
-        outline = [pt for i, pt in enumerate(outline) if i == 0 or pt != outline[i - 1]]
-        saddle = cq.Workplane("XY").polyline(outline).close().extrude(p.saddle_height)
-        slot = (
-            cq.Workplane("XY")
-            .center(0, L + p.tie_slot_depth / 2)
-            .rect(p.tie_slot_width, p.tie_slot_depth)
-            .extrude(p.saddle_height)
-        )
-        body = body.union(saddle.cut(slot))
-        log.debug("tie saddle added: slot %.1f x %.1f mm, projects %.1f mm behind the bracket",
-                  p.tie_slot_width, p.tie_slot_depth, top - L)
-
     # Upright sockets: one row down the centre (x=0), blind from each end of the leg.
     upright_ys = [p.upright_from_end, L - p.upright_from_end]
     for y in upright_ys:
@@ -540,26 +587,62 @@ def build_bracket(p: Params) -> cq.Workplane:
             for y in ys:
                 body = body.cut(_cone((sign * p.thickness / 2, y, p.bar_z), (-sign, 0, 0), rb + c, rb, c))
 
+    # Zip-tie slits, through the rail face to face.
+    for y in p.tie_slit_ys:
+        body = body.cut(tie_slit_cutter(p, y, p.tie_slit_z, p.thickness))
+    check_tie_slit_strength(p, body)
     return body
 
 
+@dataclass(frozen=True)
+class CouponLayout:
+    """Where everything on the fit-test coupon is, so the model and its blueprint read the same numbers."""
+    size_x: float
+    size_y: float
+    size_z: float
+    upright_depth: float
+    upright_x: float      # the upright socket's centre
+    upright_y: float
+    bar_y: float          # the bar socket's centre, on the +X face
+    bar_z: float
+    slit_y: float         # the tie slit's centre; it runs through the coupon along X
+    slit_z: float
+
+
+COUPON_MARGIN = 3.0           # plastic around and between the sockets and the slit
+COUPON_UPRIGHT_DEPTH = 12.0   # how deep the coupon's upright socket goes from its top
+COUPON_MIN_HEIGHT = 14.0      # the coupon is at least this tall, or as tall as the rail
+
+
+def coupon_layout(p: Params) -> CouponLayout:
+    """The fit-test coupon's dimensions: one upright socket, one bar socket and one tie slit at production size, side by side along Y."""
+    size_x = p.bar_depth + COUPON_MARGIN
+    slit_mouth = p.tie_slit_mouth[1]
+    size_y = 2 * p.bore + slit_mouth + 4 * COUPON_MARGIN
+    size_z = max(p.rail_height, COUPON_MIN_HEIGHT)
+    return CouponLayout(size_x, size_y, size_z, COUPON_UPRIGHT_DEPTH, size_x / 2, COUPON_MARGIN + p.bore / 2,
+                        2 * COUPON_MARGIN + 1.5 * p.bore, size_z / 2,
+                        size_y - COUPON_MARGIN - slit_mouth / 2, size_z / 2)
+
+
 def build_coupon(p: Params) -> cq.Workplane:
-    """Fit-test piece: one upright socket and one bar socket at production size."""
-    log.info("Building fit-test coupon (bore=%.2f)", p.bore)
-    size_x = p.bar_depth + 3.0
-    size_y = 2 * p.bore + 9.0
-    size_z = max(p.rail_height, 14.0)
-    body = cq.Workplane("XY").box(size_x, size_y, size_z, centered=(False, False, False))
+    """Fit-test piece: one upright socket, one bar socket and one tie slit at production size."""
+    log.info("Building fit-test coupon (bore=%.2f, tie slit %.1f x %.1f)", p.bore, p.tie_slit_height, p.tie_slit_width)
+    c = coupon_layout(p)
+    body = cq.Workplane("XY").box(c.size_x, c.size_y, c.size_z, centered=(False, False, False))
     upright = (
-        cq.Workplane("XY").workplane(offset=size_z - 12.0)
-        .center(size_x / 2, 3.0 + p.bore / 2).circle(p.bore / 2).extrude(12.0)
+        cq.Workplane("XY").workplane(offset=c.size_z - c.upright_depth)
+        .center(c.upright_x, c.upright_y).circle(p.bore / 2).extrude(c.upright_depth)
     )
     bar = (
-        cq.Workplane("YZ").workplane(offset=size_x)
-        .center(size_y - 3.0 - p.bore / 2, size_z / 2).circle(p.bore / 2)
+        cq.Workplane("YZ").workplane(offset=c.size_x)
+        .center(c.bar_y, c.bar_z).circle(p.bore / 2)
         .extrude(-p.bar_depth)
     )
-    return body.cut(upright).cut(bar)
+    body = body.cut(upright).cut(bar)
+    if p.tie_slit_height > 0:
+        body = body.cut(tie_slit_cutter(p, c.slit_y, c.slit_z, c.size_x, x0=0.0))
+    return body
 
 
 def _clean_stl(path: Path) -> None:
@@ -607,6 +690,7 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--upright-depth-leg", type=float, default=d.upright_depth_leg)
     ap.add_argument("--upright-from-end", type=float, default=d.upright_from_end)
     ap.add_argument("--corner-radius", type=float, default=d.corner_radius)
+    ap.add_argument("--tie-slit-height", type=float, default=d.tie_slit_height, help="0 leaves the tie slits out")
     return ap.parse_args()
 
 
@@ -621,22 +705,17 @@ def main() -> None:
         upright_depth_leg=args.upright_depth_leg,
         upright_from_end=args.upright_from_end,
         corner_radius=args.corner_radius,
+        tie_slit_height=args.tie_slit_height,
     )
     log.info("Parameters: %s", base)
     try:
         export(build_bracket(Params(**base)), args.out, "shared_wall_bracket_v2")
-        export(build_bracket(Params(**base, anchor=True)), args.out, "shared_wall_bracket_v2_anchor")
         export(build_coupon(Params(**base)), args.out, "fit_test_coupon_v2")
-        # Thin brackets (staggered and end) carry the anchor as a collar around
-        # the rear leg, because the saddle is wider than they are.
         stag = {k: v for k, v in base.items() if k != "bar_depth"}
         for letter, mirror in (("a", False), ("b", True)):
-            name = f"shared_wall_bracket_staggered_{letter}"
-            export(build_bracket(Params.staggered(**stag, mirror=mirror)), args.out, name)
-            export(build_bracket(Params.staggered(**stag, mirror=mirror, anchor=True)), args.out, f"{name}_anchor")
+            export(build_bracket(Params.staggered(**stag, mirror=mirror)), args.out, f"shared_wall_bracket_staggered_{letter}")
         for side in ("left", "right"):
-            export(build_bracket(Params.end(side, **base, anchor=True)), args.out,
-                   f"end_bracket_{side}_anchor")
+            export(build_bracket(Params.end(side, **base)), args.out, f"end_bracket_{side}")
     except ValueError as exc:
         log.error("Invalid parameters: %s", exc)
         raise SystemExit(2)

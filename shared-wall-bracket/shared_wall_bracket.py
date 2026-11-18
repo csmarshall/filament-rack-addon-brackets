@@ -319,7 +319,7 @@ def tie_slit_cutter(p: Params, y: float, z: float, thickness: float, x0: float |
     h, w = p.tie_slit_height, p.tie_slit_width
     overrun = 1.0                                   # the through-slot starts and ends clear of the faces
     core = cq.Workplane("YZ", origin=(x0 - overrun, 0, 0)).center(y, z).slot2D(h, w, 90).extrude(thickness + 2 * overrun)
-    for x_face, direction in ((x0, 1), (x0 + thickness, -1)):
+    for x_face, direction in (((x0, 1), (x0 + thickness, -1)) if lead > 0 else ()):   # no lead-in pocket if there is no lead-in
         mouth = (cq.Workplane("YZ", origin=(x_face, 0, 0)).center(y, z) if direction > 0
                  else cq.Workplane("ZY", origin=(x_face, 0, 0)).center(z, y))
         mouth = mouth.slot2D(h + 2 * lead, w + 2 * lead, 90 if direction > 0 else 0).extrude(lead, taper=45)
