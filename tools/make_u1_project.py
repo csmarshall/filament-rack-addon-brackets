@@ -39,13 +39,21 @@ PROCESS_OVERRIDES = {
     "wall_loops": "5",
     "wall_generator": "arachne",
     "sparse_infill_density": "15%",
+    # Gyroid in place of the stock grid: the OrcaSlicer wiki describes grid as
+    # perpendicular lines whose overlapping points may cause noise or artifacts,
+    # and gyroid as isotropic, with curves that help reduce warping.
+    "sparse_infill_pattern": "gyroid",
+    # 5 bottom layers (1.0 mm) in place of 3, as a precaution for the 1.85 mm
+    # wall between the bed face and each bar socket.
+    "bottom_shell_layers": "5",
     "brim_type": "outer_only",
     "brim_width": "5",
 }
 
 # The wall and brim settings again as per-object settings, so they show on the
 # part itself and survive switching to a different process preset.
-OBJECT_KEYS = ("wall_loops", "wall_generator", "brim_type", "brim_width")
+OBJECT_KEYS = ("wall_loops", "wall_generator", "sparse_infill_density", "sparse_infill_pattern",
+               "bottom_shell_layers", "brim_type", "brim_width")
 
 # Keys that describe a preset file rather than a setting.
 META_KEYS = {"type", "name", "inherits", "from", "setting_id", "instantiation", "filament_id",

@@ -65,11 +65,30 @@ sits flush against the wall.
   per plate, with about 17 mm clear to the bed edge (9 mm for the anchor
   variant).
 - 5 wall loops with the Arachne wall generator, so the 1.85, 2.85 and 3.85 mm
-  socket walls print as solid perimeters. 15% infill.
+  socket walls print as solid perimeters.
+- 15% gyroid infill and 5 bottom shell layers. See
+  [Why these settings](#why-these-settings).
 - **Not PLA.** The bracket is under constant load, and PLA slowly deforms
   under constant load and softens when warm.
 - PETG or ABS. A 305 mm ABS part is prone to warping; use a brim and keep
   draughts off it.
+
+## Why these settings
+
+Snapmaker Orca is a fork of OrcaSlicer, so the OrcaSlicer wiki is the reference
+for these settings. The stock U1 `0.20mm Standard` process uses 2 wall loops,
+the Classic wall generator, 15% grid infill and 3 bottom shell layers.
+
+| Setting | Stock | Here | Basis |
+|---|---|---|---|
+| Wall loops | 2 | 5 | Calculated. Each socket wall gets loops from both faces, so loops needed = (wall / 2) / line width. At the stock 0.42 mm outer and 0.45 mm inner line widths, 5 loops fill the thickest socket wall (3.85 mm). |
+| Wall generator | Classic | Arachne | Varies line width to close the slivers a fixed-width wall would leave. |
+| Infill pattern | Grid | Gyroid | Documented. The [OrcaSlicer patterns page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_patterns.html) says grid's overlapping points may cause noise or artifacts, and describes gyroid as isotropic, with curved geometry that helps reduce warping. |
+| Bottom shell layers | 3 | 5 | Precaution, not documented behaviour. The [shells page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_top_bottom_shells.html) says more shell layers increase part strength. The specific aim is to make the 1.85 mm wall between the bed face and each bar socket print fully solid; check that in the slicer preview. |
+| Brim | Slicer default | Outer, 10 mm (5 mm on the anchor variant) | A long ABS part lifts at the ends. The width is what fits inside the bed margin. |
+
+With 5 wall loops the walls carry nearly all the load, so the infill choice is
+mostly about print reliability.
 
 ## Regenerating
 
@@ -93,10 +112,10 @@ python3 ../tools/make_u1_project.py \
 
 The project selects the stock `Snapmaker U1 (0.4 nozzle)` printer, the
 `0.20mm Standard` process and `Generic ABS @U1 0.4 nozzle` in slot 1. It
-overrides wall loops (5), wall generator (Arachne), infill density (15%) and
-adds an outer brim: 10 mm on the bracket, 5 mm on the anchor variant, which is
-what fits inside the bed margin (`--brim-width`). The wall and brim settings
-are written both to the process and to the part itself.
+overrides wall loops (5), wall generator (Arachne), infill (15% gyroid) and
+bottom shell layers (5), and adds an outer brim: 10 mm on the bracket, 5 mm on
+the anchor variant, which is what fits inside the bed margin (`--brim-width`).
+These settings are written both to the process and to the part itself.
 
 ## Interactive 3D view
 
