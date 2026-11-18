@@ -243,7 +243,7 @@ def main() -> None:
         raise SystemExit(f"part does not fit the bed with at least 2 mm clearance (margin {margin:.1f} mm)")
     if args.brim_width > 0 and margin - args.brim_width < 2.0:
         raise SystemExit(f"a {args.brim_width:g} mm brim leaves {margin - args.brim_width:.1f} mm to the bed edge; "
-                         f"use --brim-width {max(0.0, margin - 2.0):.0f} or less")
+                         f"use --brim-width {int(max(0.0, margin - 2.0))} or less")
     log.info("brim %g mm leaves %.1f mm to the nearest bed edge", args.brim_width, margin - args.brim_width)
     if mesh.extents[2] > float(printer["printable_height"]):
         raise SystemExit("part is taller than the printable height")

@@ -122,6 +122,13 @@ Coordinate system (also the print orientation: flat edge on the bed):
 The anchor variant adds a zip-tie saddle on the rear end face for tethering
 the rack to a wall plate.
 
+Two layouts are built.  In line (40 mm thick): the two faces' bar sockets sit
+end to end, and both columns line up front and back.  Staggered (22 mm thick,
+320 mm long): one face's sockets are shifted 16 mm along the bracket so the two
+sets pass side by side; it uses less plastic, but the two columns stand 16 mm
+apart front to back.  The staggered bracket comes as a mirror-image pair, A
+and B, so a row can alternate them and zigzag instead of stepping back.
+
 Usage:
     python3 shared_wall_bracket.py
     python3 shared_wall_bracket.py --log-level DEBUG --fit-clearance 0.35
@@ -166,6 +173,17 @@ class Params:
     # Two 18 mm bar sockets plus a 4 mm centre web.  Bars seat exactly as deep
     # as in a stock bracket, so column width matches a stock rack.
     thickness: float = 40.0
+    # Staggered layout (see Params.staggered): 0 keeps the two faces' bar
+    # sockets in line.  A positive value lengthens the bracket by that much and
+    # shifts the +X face's sockets along it, so the two sets pass side by side
+    # and the bracket only needs to be one socket deep.
+    stagger: float = 0.0
+    # Staggered brackets come as a mirror-image pair.  A (mirror=False): facing
+    # the rack, the column on the right sits `face_offset` further back.
+    # B (mirror=True): the column on the left sits further back.  Alternating
+    # A and B along a row keeps it from stepping back at every wall.
+    mirror: bool = False
+    stock_length: float = 305.0      # length of the stock bracket the bar positions are measured on
     fit_clearance: float = 0.3       # added to socket DIAMETER; tune with the coupon
     chamfer: float = 0.8             # lead-in on socket mouths
     # Rounding is confined to plastic that carries no load: the four outer
@@ -199,27 +217,76 @@ class Params:
 
     @property
     def web(self) -> float:
-        """Solid plastic between the left-face and right-face bar sockets."""
+        """Solid plastic between the left-face and right-face bar sockets.
+
+        Negative in the staggered layout, where the sockets overlap in depth."""
         return self.thickness - 2 * self.bar_depth
+
+    @property
+    def bar_y_right(self) -> list:
+        """Bar socket centres on the +X face.
+
+        In line: the same as the -X face.  Staggered: the -X set mirrored end
+        for end, so the part is unchanged by turning it round (180 degrees
+        about the vertical), and there is no way to fit it back to front."""
+        return self._face_sets()[1]
+
+    @property
+    def bar_y_left(self) -> list:
+        """Bar socket centres on the -X face."""
+        return self._face_sets()[0]
+
+    def _face_sets(self):
+        near = list(self.bar_y)                               # stock positions from the front end
+        if self.stagger <= 0:
+            return near, near
+        far = sorted(self.length - y for y in self.bar_y)     # the same set, measured from the rear end
+        return (far, near) if self.mirror else (near, far)
+
+    @property
+    def face_offset(self) -> float:
+        """Smallest centre distance between a -X socket and a +X socket."""
+        return min(abs(a - b) for a in self.bar_y_left for b in self.bar_y_right)
+
+    @property
+    def plan_round_used(self) -> float:
+        """plan_round, reduced where needed to keep 3 mm around the upright sockets."""
+        return max(0.0, min(self.plan_round, self.thickness / 2 - self.bore / 2 - 3.0, self.leg_length - 2.0))
+
+    @classmethod
+    def staggered(cls, stagger: float = 15.0, back_wall: float = 4.0, **kwargs) -> "Params":
+        """Parameters for the thin, staggered bracket.
+
+        15 mm of extra length puts the two faces' sockets 16 mm apart, which
+        leaves 3.7 mm of plastic between neighbouring 12.3 mm sockets."""
+        base = cls(**kwargs)
+        return cls(**{**kwargs, "stagger": stagger, "length": base.stock_length + stagger,
+                      "thickness": base.bar_depth + back_wall})
 
     def validate(self) -> None:
         if self.divider < 1.0:
             raise ValueError(f"upright sockets leave a {self.divider:.1f} mm divider; need >= 1 mm")
-        if self.web < 2.0:
+        if self.stagger <= 0 and self.web < 2.0:
             raise ValueError(f"bar sockets leave a {self.web:.1f} mm centre web; need >= 2 mm")
+        if self.stagger > 0:
+            if self.thickness - self.bar_depth < 3.0:
+                raise ValueError("staggered bracket leaves less than 3 mm behind each bar socket")
+            if self.face_offset - self.bore < 3.0:
+                raise ValueError(f"staggered sockets are {self.face_offset:.1f} mm apart; "
+                                 f"need at least {self.bore + 3.0:.1f} mm")
         if self.corner_radius > self.height - self.rail_height:
             raise ValueError("corner_radius is larger than the step between rail and leg")
         if self.bar_z + self.bore / 2 > self.rail_height - 1.0:
             raise ValueError("bar socket breaks out of the top of the rail")
-        if self.plan_round > min(self.thickness / 2 - self.bore / 2 - 3.0, self.leg_length - 2.0):
-            raise ValueError("plan_round would thin the wall around an upright socket below 3 mm")
+        if self.thickness / 2 - self.bore / 2 < 3.0:
+            raise ValueError("bracket is too thin to leave 3 mm either side of an upright socket")
         if self.edge_round > self.rail_height - (self.bar_z + self.bore / 2) - 2.0:
             raise ValueError("edge_round would thin the wall over a bar socket below 2 mm")
         if self.anchor:
             if self.tie_slot_width / 2 < self.bore / 2 + 0.2:
                 raise ValueError("tie_slot_width must be wider than the upright socket so the saddle legs miss it")
-            if self.tie_slot_width / 2 + self.saddle_leg + self.saddle_gusset > self.thickness / 2:
-                raise ValueError("tie saddle is wider than the bracket")
+            if self.thickness / 2 - self.tie_slot_width / 2 < 3.0:
+                raise ValueError("bracket is too thin for a tie saddle with 3 mm legs")
             if self.saddle_height > self.height:
                 raise ValueError("saddle_height is taller than the bracket")
         # Bar sockets and upright sockets must not meet anywhere along the length.
@@ -227,7 +294,7 @@ class Params:
         up_hi = self.upright_from_end + self.bore / 2
         if up_lo < 1.5 or up_hi > self.leg_length - 1.5:
             raise ValueError("upright socket leaves less than 1.5 mm of wall in the leg")
-        for y in self.bar_y:
+        for y in self.bar_y_left + self.bar_y_right:
             for centre in (self.upright_from_end, self.length - self.upright_from_end):
                 if abs(y - centre) < self.bore + 1.5:
                     raise ValueError(f"bar socket at y={y} runs into the upright socket at y={centre}")
@@ -263,11 +330,12 @@ def build_bracket(p: Params) -> cq.Workplane:
     )
 
     # Round the four outer vertical corners (the only full-height Z edges).
-    if p.plan_round > 0:
+    plan_round = p.plan_round_used
+    if plan_round > 0:
         try:
             corners = [e for e in body.edges("|Z").vals() if e.Length() > H - 0.5]
-            log.debug("rounding %d vertical corners at r=%.1f", len(corners), p.plan_round)
-            body = body.newObject(corners).fillet(p.plan_round)
+            log.debug("rounding %d vertical corners at r=%.1f", len(corners), plan_round)
+            body = body.newObject(corners).fillet(plan_round)
         except Exception as exc:
             log.error("Corner rounding failed, leaving corners square: %s", exc)
 
@@ -280,12 +348,12 @@ def build_bracket(p: Params) -> cq.Workplane:
             # (end edge and inner edge): those border the 2.85 mm walls
             # around the upright socket mouth, so they stay square.
             edges = [e for f in body.faces(">Z").vals() for e in f.Edges()
-                     if abs(e.Center().x) > p.thickness / 2 - p.plan_round - 0.5]
+                     if abs(e.Center().x) > p.thickness / 2 - plan_round - 0.5]
             for face in body.faces(">X").vals() + body.faces("<X").vals():
                 for e in face.Edges():
                     c = e.Center()
                     is_bed_edge = c.z < 1.0
-                    is_vertical_corner_seam = min(c.y, L - c.y) < p.plan_round + 1.0 and c.z < H - 1.0
+                    is_vertical_corner_seam = min(c.y, L - c.y) < plan_round + 1.0 and c.z < H - 1.0
                     is_leg_top = c.z > H - 0.5      # already collected above
                     # The rail-top edges run over the bar socket mouths, where the
                     # wall carries bar load, so they stay square.
@@ -305,14 +373,19 @@ def build_bracket(p: Params) -> cq.Workplane:
     # The slot is wider than the upright socket, so both saddle legs join solid
     # plastic either side of the socket and not the thin wall behind it.
     if p.anchor:
-        ox = p.tie_slot_width / 2 + p.saddle_leg          # outer half-width of the saddle
+        # On a thin bracket the legs narrow to the bracket's own width and the
+        # feet disappear; the legs then run straight into its side walls.
+        leg = min(p.saddle_leg, p.thickness / 2 - p.tie_slot_width / 2)
+        ox = p.tie_slot_width / 2 + leg                    # outer half-width of the saddle
         top = L + p.tie_slot_depth + p.saddle_bar          # rearmost face of the bar
-        g, c = p.saddle_gusset, p.saddle_corner
+        g, c = min(p.saddle_gusset, p.thickness / 2 - ox), p.saddle_corner
         outline = [
             (-ox - g, L - 2), (ox + g, L - 2), (ox + g, L), (ox, L + g),
             (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
             (-ox, L + g), (-ox - g, L),
         ]
+        # With no feet (g == 0) some points coincide; drop the repeats.
+        outline = [pt for i, pt in enumerate(outline) if i == 0 or pt != outline[i - 1]]
         saddle = cq.Workplane("XY").polyline(outline).close().extrude(p.saddle_height)
         slot = (
             cq.Workplane("XY")
@@ -337,9 +410,12 @@ def build_bracket(p: Params) -> cq.Workplane:
             vent = cq.Workplane("XY").center(0, y).circle(p.upright_vent_d / 2).extrude(H)
             body = body.cut(vent)
 
-    # Bar sockets: blind from each face, stopping at the centre web.
-    for y in p.bar_y:
-        for sign in (-1, 1):
+    # Bar sockets: blind from each face, bar_depth deep.  In line they stop
+    # either side of the centre web; staggered they overlap in depth and pass
+    # side by side.
+    face_ys = ((-1, p.bar_y_left), (1, p.bar_y_right))
+    for sign, ys in face_ys:
+        for y in ys:
             sock = (
                 cq.Workplane("YZ")
                 .workplane(offset=sign * p.web / 2)
@@ -355,8 +431,8 @@ def build_bracket(p: Params) -> cq.Workplane:
         for y in upright_ys:
             body = body.cut(_cone((0, y, 0), (0, 0, 1), rb + c, rb, c))
             body = body.cut(_cone((0, y, H), (0, 0, -1), rb + c, rb, c))
-        for y in p.bar_y:
-            for sign in (-1, 1):
+        for sign, ys in face_ys:
+            for y in ys:
                 body = body.cut(_cone((sign * p.thickness / 2, y, p.bar_z), (-sign, 0, 0), rb + c, rb, c))
 
     return body
@@ -446,6 +522,10 @@ def main() -> None:
         export(build_bracket(Params(**base)), args.out, "shared_wall_bracket_v2")
         export(build_bracket(Params(**base, anchor=True)), args.out, "shared_wall_bracket_v2_anchor")
         export(build_coupon(Params(**base)), args.out, "fit_test_coupon_v2")
+        for letter, mirror in (("a", False), ("b", True)):
+            name = f"shared_wall_bracket_staggered_{letter}"
+            export(build_bracket(Params.staggered(**base, mirror=mirror)), args.out, name)
+            export(build_bracket(Params.staggered(**base, mirror=mirror, anchor=True)), args.out, f"{name}_anchor")
     except ValueError as exc:
         log.error("Invalid parameters: %s", exc)
         raise SystemExit(2)
