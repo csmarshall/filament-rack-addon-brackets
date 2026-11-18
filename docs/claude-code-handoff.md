@@ -129,6 +129,9 @@ shifted 16 mm along the bracket so the two sets pass side by side; it uses less
 plastic, but the two columns stand 16 mm apart front to back.  The staggered bracket comes as a mirror-image pair, A
 and B, so a row can alternate them and zigzag instead of stepping back.
 
+End brackets (Params.end) are single-sided stand-ins for the stock bracket at
+either end of a row, built with the anchor.
+
 Usage:
     python3 shared_wall_bracket.py
     python3 shared_wall_bracket.py --log-level DEBUG --fit-clearance 0.35
@@ -187,6 +190,10 @@ class Params:
     # B (mirror=True): the column on the left sits further back.  Alternating
     # A and B along a row keeps it from stepping back at every wall.
     mirror: bool = False
+    # Which faces carry bar sockets: -1 is the -X face, +1 the +X face.  A
+    # shared wall has both.  An end wall has one: facing the rack, the left end
+    # wall's sockets face right (+1) and the right end wall's face left (-1).
+    bar_faces: tuple = (-1, 1)
     stock_length: float = 305.0      # length of the stock bracket the bar positions are measured on
     fit_clearance: float = 0.3       # added to socket DIAMETER; tune with the coupon
     chamfer: float = 0.8             # lead-in on socket mouths
@@ -299,12 +306,34 @@ class Params:
         }
         return cls(**{**kwargs, **values})
 
+    @classmethod
+    def end(cls, side: str = "left", **kwargs) -> "Params":
+        """Parameters for an end-wall bracket: bar sockets on one face only.
+
+        It is a printed stand-in for a stock bracket at either end of a row:
+        the stock 18 mm width, 16 mm bar sockets with a 2 mm back wall, the
+        stock 18 mm rail and fully rounded ends.  `side` is which end of the
+        row it goes on, facing the rack: "left" puts the sockets on the face
+        toward the row (+X), "right" on the other.  The two are mirror images
+        and are not interchangeable, because the anchor must stay at the back."""
+        if side not in ("left", "right"):
+            raise ValueError("side must be 'left' or 'right'")
+        base = cls(**kwargs)
+        thickness = base.bar_depth + 2.0
+        values = {"thickness": thickness, "plan_round": thickness / 2,
+                  "bar_faces": (1,) if side == "left" else (-1,)}
+        return cls(**{**kwargs, **values})
+
     def validate(self) -> None:
         if self.divider < 1.0:
             raise ValueError(f"upright sockets leave a {self.divider:.1f} mm divider; need >= 1 mm")
         if self.bar_vent_d >= self.bore:
             raise ValueError("bar_vent_d must be smaller than the socket, or the bar has nothing to stop against")
-        if self.stagger <= 0 and self.web < 2.0:
+        if not self.bar_faces or any(f not in (-1, 1) for f in self.bar_faces):
+            raise ValueError("bar_faces must hold -1, 1 or both")
+        if len(self.bar_faces) == 1 and self.thickness - self.bar_depth < 1.5:
+            raise ValueError("end bracket leaves less than 1.5 mm behind each bar socket")
+        if len(self.bar_faces) == 2 and self.stagger <= 0 and self.web < 2.0:
             raise ValueError(f"bar sockets leave a {self.web:.1f} mm centre web; need >= 2 mm")
         if self.stagger > 0:
             if self.thickness - self.bar_depth < 1.5:
@@ -323,8 +352,11 @@ class Params:
         if self.anchor:
             if self.tie_slot_width / 2 < self.bore / 2 + 0.2:
                 raise ValueError("tie_slot_width must be wider than the upright socket so the saddle legs miss it")
-            if self.thickness / 2 - self.tie_slot_width / 2 < 3.0:
-                raise ValueError("bracket is too thin for a tie saddle with 3 mm legs")
+            collar = self.tie_slot_width / 2 + self.saddle_leg - self.thickness / 2
+            if collar > 0:
+                last = max(self.bar_y_left + self.bar_y_right)
+                if last + self.bore / 2 + 1.0 > self.length - self.leg_length:
+                    raise ValueError("the anchor collar would cover the mouth of the last bar socket")
             if self.saddle_height > self.height:
                 raise ValueError("saddle_height is taller than the bracket")
         # Bar sockets and upright sockets must not meet anywhere along the length.
@@ -332,7 +364,7 @@ class Params:
         up_hi = self.upright_from_end + self.bore / 2
         if up_lo < 1.5 or up_hi > self.leg_length - 1.5:
             raise ValueError("upright socket leaves less than 1.5 mm of wall in the leg")
-        for y in self.bar_y_left + self.bar_y_right:
+        for y in self.bar_y_left + self.bar_y_right:   # checked for both faces, used or not
             for centre in (self.upright_from_end, self.length - self.upright_from_end):
                 if abs(y - centre) < self.bore + 1.5:
                     raise ValueError(f"bar socket at y={y} runs into the upright socket at y={centre}")
@@ -419,22 +451,36 @@ def build_bracket(p: Params) -> cq.Workplane:
     # The slot is wider than the upright socket, so both saddle legs join solid
     # plastic either side of the socket and not the thin wall behind it.
     if p.anchor:
-        # On a thin bracket the legs narrow to the bracket's own width and the
-        # feet disappear; the legs then run straight into its side walls.
-        leg = min(p.saddle_leg, p.thickness / 2 - p.tie_slot_width / 2)
-        ox = p.tie_slot_width / 2 + leg                    # outer half-width of the saddle
+        ox = p.tie_slot_width / 2 + p.saddle_leg           # outer half-width of the saddle
         top = L + p.tie_slot_depth + p.saddle_bar          # rearmost face of the bar
-        g, c = min(p.saddle_gusset, p.thickness / 2 - ox), p.saddle_corner
-        # The rear end is rounded, so the saddle's feet reach back into the
-        # bracket far enough to meet solid plastic across their whole width.
-        r_end = p.plan_round_used
-        reach = max(0.0, (ox + g) - (p.thickness / 2 - r_end))
-        back = 2.0 + (r_end - (max(r_end ** 2 - reach ** 2, 0.0)) ** 0.5 if r_end > 0 else 0.0)
-        outline = [
-            (-ox - g, L - back), (ox + g, L - back), (ox + g, L), (ox, L + g),
-            (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
-            (-ox, L + g), (-ox - g, L),
-        ]
+        c = p.saddle_corner
+        half = p.thickness / 2
+        if ox <= half:
+            # Wide bracket: the saddle stands on the rear end face, with 45
+            # degree feet.  The end is rounded, so the feet reach back into the
+            # bracket far enough to meet solid plastic across their whole width.
+            g = min(p.saddle_gusset, half - ox)
+            r_end = p.plan_round_used
+            reach = max(0.0, (ox + g) - (half - r_end))
+            back = 2.0 + (r_end - (max(r_end ** 2 - reach ** 2, 0.0)) ** 0.5 if r_end > 0 else 0.0)
+            outline = [
+                (-ox - g, L - back), (ox + g, L - back), (ox + g, L), (ox, L + g),
+                (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
+                (-ox, L + g), (-ox - g, L),
+            ]
+        else:
+            # Thin bracket: the saddle is wider than the bracket, so it becomes
+            # a collar around the whole rear leg.  The collar runs the length of
+            # the leg, so the tie's pull goes into the leg through both of its
+            # sides and not through the thin wall behind the upright socket.
+            # It starts at the leg, clear of the last bar socket, and widens
+            # over a 45 degree ramp.
+            d = ox - half
+            outline = [
+                (-half, L - G), (half, L - G), (ox, L - G + d),
+                (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
+                (-ox, L - G + d),
+            ]
         # With no feet (g == 0) some points coincide; drop the repeats.
         outline = [pt for i, pt in enumerate(outline) if i == 0 or pt != outline[i - 1]]
         saddle = cq.Workplane("XY").polyline(outline).close().extrude(p.saddle_height)
@@ -464,7 +510,7 @@ def build_bracket(p: Params) -> cq.Workplane:
     # Bar sockets: blind from each face, bar_depth deep.  In line they stop
     # either side of the centre web; staggered they overlap in depth and pass
     # side by side.
-    face_ys = ((-1, p.bar_y_left), (1, p.bar_y_right))
+    face_ys = tuple((sign, ys) for sign, ys in ((-1, p.bar_y_left), (1, p.bar_y_right)) if sign in p.bar_faces)
     for sign, ys in face_ys:
         for y in ys:
             sock = (
@@ -477,7 +523,7 @@ def build_bracket(p: Params) -> cq.Workplane:
             body = body.cut(sock)
 
     # Vent through the centre web between each pair of opposite bar sockets.
-    if p.stagger <= 0 and p.bar_vent_d > 0:
+    if p.stagger <= 0 and len(p.bar_faces) == 2 and p.bar_vent_d > 0:
         for y in p.bar_y:
             vent = cq.Solid.makeCylinder(p.bar_vent_d / 2, p.web + 2.0,
                                          pnt=cq.Vector(-p.web / 2 - 1.0, y, p.bar_z), dir=cq.Vector(1, 0, 0))
@@ -581,13 +627,16 @@ def main() -> None:
         export(build_bracket(Params(**base)), args.out, "shared_wall_bracket_v2")
         export(build_bracket(Params(**base, anchor=True)), args.out, "shared_wall_bracket_v2_anchor")
         export(build_coupon(Params(**base)), args.out, "fit_test_coupon_v2")
-        # The staggered bracket has no anchor variant: at 18 mm wide there is no
-        # room for a tie saddle with sound legs.  Tether a staggered wall by
-        # looping the tie around a rear upright tube.
+        # Thin brackets (staggered and end) carry the anchor as a collar around
+        # the rear leg, because the saddle is wider than they are.
         stag = {k: v for k, v in base.items() if k != "bar_depth"}
         for letter, mirror in (("a", False), ("b", True)):
-            export(build_bracket(Params.staggered(**stag, mirror=mirror)), args.out,
-                   f"shared_wall_bracket_staggered_{letter}")
+            name = f"shared_wall_bracket_staggered_{letter}"
+            export(build_bracket(Params.staggered(**stag, mirror=mirror)), args.out, name)
+            export(build_bracket(Params.staggered(**stag, mirror=mirror, anchor=True)), args.out, f"{name}_anchor")
+        for side in ("left", "right"):
+            export(build_bracket(Params.end(side, **base, anchor=True)), args.out,
+                   f"end_bracket_{side}_anchor")
     except ValueError as exc:
         log.error("Invalid parameters: %s", exc)
         raise SystemExit(2)
