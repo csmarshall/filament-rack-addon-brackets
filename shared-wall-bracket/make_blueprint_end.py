@@ -26,6 +26,7 @@ log = logging.getLogger("blueprint")
 
 SCALE = 0.75   # sheet mm per model mm for the main views
 DETAIL = 1.5   # sheet mm per model mm for the section and the anchor detail
+TOP_LABEL_DROP = 4.0   # the end labels sit just under the top view, beside its caption
 DEFAULT_OUT = Path(__file__).with_name("blueprint_end")
 
 
@@ -45,15 +46,13 @@ def draw(out_stem: Path) -> None:
     top = View.at_corner(sheet, project(solid.wrapped, (0, 0, 1), (-1, 0, 0)), (x_left, 120.0), SCALE).draw()
     top.caption("TOP", "leg ends; the rear collar is on the right", below=5)
     top.dim_v(-T / 2, T / 2, 0, -9)
+    sp.end_labels(sheet, top, p, drop=TOP_LABEL_DROP)
 
     x_det = x_left + L * SCALE + 50
     cut = ys[0]
     sp.face_section(sheet, p, solid, face, cut, (x_det + 6, 181.0), DETAIL, "SECTION A-A")
     sp.cut_line(sheet, front, (cut, -4), (cut, H + 3), "A")
 
-    ox, top_y = sp.anchor_extent(p)
-    z = p.saddle_height / 2
-    sp.cut_line(sheet, front, (L - p.leg_length + 7, z), (top_y + 1, z), "B")
     sp.anchor_plan(sheet, p, solid, x_det - 4, 131.0, DETAIL, "DETAIL B: ANCHOR")
     sp.anchor_rear(sheet, p, solid, (x_det + 78, 107.0), 1.0, "VIEW C")
 

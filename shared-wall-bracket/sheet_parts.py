@@ -8,7 +8,10 @@ import cadquery as cq
 from blueprint import View, fmt, project, section_loops
 from shared_wall_bracket import Params
 
+REAR_CUT_OVERRUN = 3.0   # model mm the cut line runs past the part, so its letters sit clear of the outline
 PLAN_MARGIN = 1.0   # model mm of leg shown ahead of the anchor in the plan section; it must stay clear of the last bar socket
+END_LABEL_DROP = 22.0   # sheet mm under a view where the end labels sit, clear of its dimension lines
+END_LABEL_SIZE = 5.0
 SLAB = 0.4          # thickness of the slice projected for a section, model mm
 
 
@@ -38,7 +41,7 @@ def anchor_plan(sheet, p: Params, solid: cq.Solid, left: float, mid_y: float, sc
     view.dim_v(-p.tie_slot_width / 2, p.tie_slot_width / 2, top, 6)
     view.dim_v(-ox, ox, top, 15)
     view.dim_v(-half, half, y0, -6)
-    view.caption(title, "plan section", below=8)
+    view.caption(title, "back end, plan section", below=8)
     return view
 
 
@@ -48,8 +51,9 @@ def anchor_rear(sheet, p: Params, solid: cq.Solid, centre: tuple[float, float], 
     proj = project(solid.wrapped, (0, 1, 0), (0, 0, 1))   # view x = -model X
     view = View(sheet, proj, centre, scale).draw()
     view.dim_h(-ox, ox, 0, -7)
-    view.dim_v(0, p.saddle_height, ox, 7)
-    view.dim_v(0, p.height, -ox, -8)
+    view.dim_v(0, p.saddle_height, -ox, -10)
+    view.dim_v(0, p.height, -ox, -19)
+    cut_line(sheet, view, (-ox - REAR_CUT_OVERRUN, p.saddle_height / 2), (ox + REAR_CUT_OVERRUN, p.saddle_height / 2), "B")   # plane of the plan detail
     view.caption(title, "rear end", below=14)
     return view
 
@@ -61,6 +65,19 @@ def anchor_notes(p: Params, plane: str = "B") -> str:
     return (f"Anchor: {wide}, {fmt(p.saddle_height)} high, {fmt(p.saddle_leg)} legs, {fmt(p.saddle_bar)} bar behind a {fmt(p.tie_slot_width)} x "
             f"{fmt(p.tie_slot_depth)} tie slot. Zip tie runs through the slot and round a tube or to the wall plate. "
             f"Detail {plane} is cut {fmt(p.saddle_height / 2)} above the flat edge.")
+
+
+def end_labels(sheet, view: View, p: Params, flip: bool = False, drop: float = END_LABEL_DROP) -> None:
+    """Name the two ends of the bracket `drop` sheet mm under a view that shows its length: the FRONT END is Y = 0, which faces the room when the rack
+    stands against the wall, and the BACK END is Y = length, where the anchor is. `flip` is for a view from the -X side, where Y runs right to left."""
+    x0, y0, x1, y1 = view.box()
+    y = y0 - drop
+    front_x = float(view.to_sheet((-0.0, 0))[0][0])
+    back_x = float(view.to_sheet((-p.length if flip else p.length, 0))[0][0])
+    back = "BACK END (anchor)" if p.anchor else "BACK END"
+    a, b = ("FRONT END", back) if not flip else (back, "FRONT END")
+    sheet.text(min(front_x, back_x), y, a, END_LABEL_SIZE, ha="left", va="center", weight="bold")
+    sheet.text(max(front_x, back_x), y, b, END_LABEL_SIZE, ha="right", va="center", weight="bold")
 
 
 def face_view(sheet, p: Params, solid: cq.Solid, left: float, base: float, face: int, ys: list, scale: float, title: str, detail: str,
@@ -91,6 +108,7 @@ def face_view(sheet, p: Params, solid: cq.Solid, left: float, base: float, face:
         view.leader((f(y) + p.bore / 2 * 0.7, p.bar_z + p.bore / 2 * 0.7), (x0 + 100, y1 + 14),
                     f"{len(ys)}x {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep on this face")
     view.caption(title, detail, below=21)
+    end_labels(sheet, view, p, flip=face < 0)
     return view
 
 

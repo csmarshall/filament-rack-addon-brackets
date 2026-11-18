@@ -125,7 +125,9 @@ def draw(p: Params, out_stem: Path) -> None:
     # --- Anchor detail: the same bracket with the saddle on its rear end, in the free corner between the top view and the section. ---
     anchored = dataclasses.replace(p, anchor=True)
     asolid = build_bracket(anchored).val()
-    sp.cut_line(sheet, front, (L - G + 7, p.saddle_height / 2), (L + 1, p.saddle_height / 2), "B")
+    zc = anchored.saddle_height / 2   # the plan detail's cutting plane, lettered on the END view, which looks at the back end
+    sp.cut_line(sheet, end, (-half_t - sp.REAR_CUT_OVERRUN, zc), (half_t + sp.REAR_CUT_OVERRUN, zc), "B")
+    sp.end_labels(sheet, front, p)
     sp.anchor_plan(sheet, anchored, asolid, ANCHOR_AT[0], ANCHOR_AT[1], ANCHOR_SCALE, "DETAIL B")
 
     bh.finish(

@@ -26,6 +26,7 @@ log = logging.getLogger("blueprint")
 
 SCALE = 0.75   # sheet mm per model mm for the main views
 DETAIL = 1.5   # sheet mm per model mm for the section and the anchor detail
+TOP_LABEL_DROP = 4.0   # the end labels sit just under the top view, beside its caption
 DEFAULT_OUT = Path(__file__).with_name("blueprint_staggered")
 
 
@@ -46,6 +47,7 @@ def draw(out_stem: Path) -> None:
     top = View.at_corner(sheet, project(solid.wrapped, (0, 0, 1), (-1, 0, 0)), (x_left, 90.0), SCALE).draw()
     top.caption("TOP", "leg ends", below=5)
     top.dim_v(-T / 2, T / 2, 0, -9)
+    sp.end_labels(sheet, top, p, drop=TOP_LABEL_DROP)
 
     # Section through the first +X socket, enlarged, right of the main views.
     x_det = x_left + L * SCALE + 38
@@ -56,8 +58,6 @@ def draw(out_stem: Path) -> None:
 
     # Anchor detail: the same bracket with the rear collar and tie slot.
     asolid = build_bracket(anchored).val()
-    z = anchored.saddle_height / 2
-    sp.cut_line(sheet, right, (L - anchored.leg_length + 7, z), (L + 1, z), "B")
     sp.anchor_plan(sheet, anchored, asolid, x_det - 4, 131.0, DETAIL, "DETAIL B: ANCHOR")
     sp.anchor_rear(sheet, anchored, asolid, (x_det + 78, 107.0), 1.0, "VIEW C")
 
@@ -65,8 +65,11 @@ def draw(out_stem: Path) -> None:
         f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
         f"Bar sockets: {len(p.bar_y_left)} on each long face, centred {fmt(p.bar_z)} above the flat edge. The two faces' sets are offset "
         f"{fmt(p.face_offset)} along the bracket, so they pass side by side with {fmt(p.thickness - p.bar_depth)} of plastic behind each.",
-        f"B is the mirror image of A (the bracket turned over: -X face sockets at {', '.join(fmt(y) for y in b.bar_y_left)} from the front end, "
-        f"+X face at {', '.join(fmt(y) for y in b.bar_y_right)}). Alternate A and B along a row to zigzag.",
+        "B is a true mirror image of A and is printed as its own part. Turning A over does not make B (the bars land at the wrong height), and "
+        "turning it end for end changes nothing. Measured from the front end (the end facing the room), "
+        f"A has -X face sockets at {', '.join(fmt(y) for y in a.bar_y_left)} and +X face at {', '.join(fmt(y) for y in a.bar_y_right)}; "
+        f"B has -X face at {', '.join(fmt(y) for y in b.bar_y_left)} and +X face at {', '.join(fmt(y) for y in b.bar_y_right)}. "
+        "Alternate A and B along a row to zigzag.",
         f"Upright sockets: one from each end of each leg, on the centre line, {fmt(p.divider)} divider between.",
         sp.anchor_notes(anchored),
         "Print flat edge down, no supports. Untested hobby design. No load rating. See DISCLAIMER.md.",
