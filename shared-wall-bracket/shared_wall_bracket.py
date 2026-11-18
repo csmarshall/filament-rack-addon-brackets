@@ -444,20 +444,45 @@ def build_bracket(p: Params) -> cq.Workplane:
     return body
 
 
+@dataclass(frozen=True)
+class CouponLayout:
+    """Where everything on the fit-test coupon is, so the model and its blueprint read the same numbers."""
+    size_x: float
+    size_y: float
+    size_z: float
+    upright_depth: float
+    upright_x: float      # the upright socket's centre
+    upright_y: float
+    bar_y: float          # the bar socket's centre, on the +X face
+    bar_z: float
+
+
+COUPON_MARGIN = 3.0           # plastic around and between the two sockets
+COUPON_UPRIGHT_DEPTH = 12.0   # how deep the coupon's upright socket goes from its top
+COUPON_MIN_HEIGHT = 14.0      # the coupon is at least this tall, or as tall as the rail
+
+
+def coupon_layout(p: Params) -> CouponLayout:
+    """The fit-test coupon's dimensions: one upright socket and one bar socket at production size."""
+    size_x = p.bar_depth + COUPON_MARGIN
+    size_y = 2 * p.bore + 3 * COUPON_MARGIN
+    size_z = max(p.rail_height, COUPON_MIN_HEIGHT)
+    return CouponLayout(size_x, size_y, size_z, COUPON_UPRIGHT_DEPTH, size_x / 2, COUPON_MARGIN + p.bore / 2,
+                        size_y - COUPON_MARGIN - p.bore / 2, size_z / 2)
+
+
 def build_coupon(p: Params) -> cq.Workplane:
     """Fit-test piece: one upright socket and one bar socket at production size."""
     log.info("Building fit-test coupon (bore=%.2f)", p.bore)
-    size_x = p.bar_depth + 3.0
-    size_y = 2 * p.bore + 9.0
-    size_z = max(p.rail_height, 14.0)
-    body = cq.Workplane("XY").box(size_x, size_y, size_z, centered=(False, False, False))
+    c = coupon_layout(p)
+    body = cq.Workplane("XY").box(c.size_x, c.size_y, c.size_z, centered=(False, False, False))
     upright = (
-        cq.Workplane("XY").workplane(offset=size_z - 12.0)
-        .center(size_x / 2, 3.0 + p.bore / 2).circle(p.bore / 2).extrude(12.0)
+        cq.Workplane("XY").workplane(offset=c.size_z - c.upright_depth)
+        .center(c.upright_x, c.upright_y).circle(p.bore / 2).extrude(c.upright_depth)
     )
     bar = (
-        cq.Workplane("YZ").workplane(offset=size_x)
-        .center(size_y - 3.0 - p.bore / 2, size_z / 2).circle(p.bore / 2)
+        cq.Workplane("YZ").workplane(offset=c.size_x)
+        .center(c.bar_y, c.bar_z).circle(p.bore / 2)
         .extrude(-p.bar_depth)
     )
     return body.cut(upright).cut(bar)
