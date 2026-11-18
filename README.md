@@ -35,7 +35,7 @@ regenerate.
 
 | Part | What it does | Status |
 |---|---|---|
-| [Shared-wall bracket](shared-wall-bracket/) | Joins two or more racks into one unit with shared centre walls. Two layouts: in line (40 mm thick) and staggered (22 mm thick). | Modelled from measurements; socket fit not yet test-printed. |
+| [Shared-wall bracket](shared-wall-bracket/) | Joins two or more racks into one unit with shared centre walls. Two layouts: in line (40 mm thick) and staggered (18 mm thick, the stock width). | Modelled from measurements; socket fit not yet test-printed. |
 | [Anti-tip wall plate](anti-tip-wall-plate/) | Wall plate with a saddle for a zip-tie tether to a rack upright. | Modelled; not printed or load tested. |
 
 [View the shared-wall bracket in 3D](shared-wall-bracket/README.md#interactive-3d-view), or open any `.stl` under `shared-wall-bracket/models/` for GitHub's built-in viewer.

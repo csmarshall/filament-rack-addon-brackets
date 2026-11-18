@@ -23,10 +23,10 @@ The anchor variant adds a zip-tie saddle on the rear end face for tethering
 the rack to a wall plate.
 
 Two layouts are built.  In line (40 mm thick): the two faces' bar sockets sit
-end to end, and both columns line up front and back.  Staggered (22 mm thick,
-320 mm long): one face's sockets are shifted 16 mm along the bracket so the two
-sets pass side by side; it uses less plastic, but the two columns stand 16 mm
-apart front to back.  The staggered bracket comes as a mirror-image pair, A
+end to end, and both columns line up front and back.  Staggered (18 mm thick
+like the stock bracket, 320 mm long, with a 27 mm rail): one face's sockets are
+shifted 16 mm along the bracket so the two sets pass side by side; it uses less
+plastic, but the two columns stand 16 mm apart front to back.  The staggered bracket comes as a mirror-image pair, A
 and B, so a row can alternate them and zigzag instead of stepping back.
 
 Usage:
@@ -150,18 +150,46 @@ class Params:
 
     @property
     def plan_round_used(self) -> float:
-        """plan_round, reduced where needed to keep 3 mm around the upright sockets."""
-        return max(0.0, min(self.plan_round, self.thickness / 2 - self.bore / 2 - 3.0, self.leg_length - 2.0))
+        """The corner radius actually cut.
+
+        Normally plan_round, reduced where needed to keep 3 mm around the
+        upright sockets.  The exception is a bracket whose upright socket sits
+        exactly half a thickness in from the end, like the stock part: its end
+        can be rounded off completely, because that round is concentric with
+        the socket and leaves the same wall all the way round."""
+        half = self.thickness / 2
+        if abs(self.upright_from_end - half) < 0.01 and self.plan_round >= half - 0.01:
+            return half - 0.05          # a hair under half, so a sliver of flat end face remains
+        return max(0.0, min(self.plan_round, half - self.bore / 2 - 3.0, self.leg_length - 2.0))
 
     @classmethod
-    def staggered(cls, stagger: float = 15.0, back_wall: float = 4.0, **kwargs) -> "Params":
+    def staggered(cls, stagger: float = 15.0, back_wall: float = 2.0, bar_depth: float = 16.0,
+                  rail_height: float = 27.0, **kwargs) -> "Params":
         """Parameters for the thin, staggered bracket.
 
-        15 mm of extra length puts the two faces' sockets 16 mm apart, which
-        leaves 3.7 mm of plastic between neighbouring 12.3 mm sockets."""
+        It matches the stock bracket's 18 mm width and fully rounded ends: the
+        bar sockets are 16 mm deep, as measured on the stock part, with a 2 mm
+        back wall.  15 mm of extra length puts the two faces' sockets 16 mm
+        apart, leaving 3.7 mm of plastic between neighbouring 12.3 mm sockets.
+
+        The rail is 27 mm tall where the stock rail is 18; the extra height is
+        on the side away from the flat edge, between the legs.  A shared wall
+        carries two columns on a rail less than half as wide as the in-line
+        bracket's.  Bending strength goes with width x height^2 and stiffness
+        with width x height^3, so 27 mm matches the in-line rail's strength
+        (18 x 27^2 against 40 x 18^2) and exceeds its stiffness by half."""
         base = cls(**kwargs)
-        return cls(**{**kwargs, "stagger": stagger, "length": base.stock_length + stagger,
-                      "thickness": base.bar_depth + back_wall})
+        thickness = bar_depth + back_wall
+        values = {
+            "stagger": stagger,
+            "length": base.stock_length + stagger,
+            "thickness": thickness,
+            "bar_depth": bar_depth,
+            "rail_height": rail_height,
+            "corner_radius": min(base.corner_radius, base.height - rail_height),
+            "plan_round": thickness / 2,
+        }
+        return cls(**{**kwargs, **values})
 
     def validate(self) -> None:
         if self.divider < 1.0:
@@ -169,8 +197,8 @@ class Params:
         if self.stagger <= 0 and self.web < 2.0:
             raise ValueError(f"bar sockets leave a {self.web:.1f} mm centre web; need >= 2 mm")
         if self.stagger > 0:
-            if self.thickness - self.bar_depth < 3.0:
-                raise ValueError("staggered bracket leaves less than 3 mm behind each bar socket")
+            if self.thickness - self.bar_depth < 1.5:
+                raise ValueError("staggered bracket leaves less than 1.5 mm behind each bar socket")
             if self.face_offset - self.bore < 3.0:
                 raise ValueError(f"staggered sockets are {self.face_offset:.1f} mm apart; "
                                  f"need at least {self.bore + 3.0:.1f} mm")
@@ -178,8 +206,8 @@ class Params:
             raise ValueError("corner_radius is larger than the step between rail and leg")
         if self.bar_z + self.bore / 2 > self.rail_height - 1.0:
             raise ValueError("bar socket breaks out of the top of the rail")
-        if self.thickness / 2 - self.bore / 2 < 3.0:
-            raise ValueError("bracket is too thin to leave 3 mm either side of an upright socket")
+        if self.thickness / 2 - self.bore / 2 < 2.5:
+            raise ValueError("bracket is too thin to leave 2.5 mm either side of an upright socket")
         if self.edge_round > self.rail_height - (self.bar_z + self.bore / 2) - 2.0:
             raise ValueError("edge_round would thin the wall over a bar socket below 2 mm")
         if self.anchor:
@@ -218,16 +246,18 @@ def build_bracket(p: Params) -> cq.Workplane:
     k = r * (1 - 0.5 ** 0.5)   # offset of the 45-degree point on each corner arc
 
     # Side profile in the YZ plane (local x = Y, local y = Z), extruded along X.
-    body = (
-        cq.Workplane("YZ")
-        .moveTo(0, 0).lineTo(L, 0).lineTo(L, H).lineTo(L - G, H)
-        .lineTo(L - G, R + r)
-        .threePointArc((L - G - k, R + k), (L - G - r, R))
+    profile = cq.Workplane("YZ").moveTo(0, 0).lineTo(L, 0).lineTo(L, H).lineTo(L - G, H)
+    straight = H - (R + r) > 1e-6       # a straight piece of leg above each curve, if the curve leaves room
+    if straight:
+        profile = profile.lineTo(L - G, R + r)
+    profile = (
+        profile.threePointArc((L - G - k, R + k), (L - G - r, R))
         .lineTo(G + r, R)
         .threePointArc((G + k, R + k), (G, R + r))
-        .lineTo(G, H).lineTo(0, H).close()
-        .extrude(p.thickness / 2, both=True)
     )
+    if straight:
+        profile = profile.lineTo(G, H)
+    body = profile.lineTo(0, H).close().extrude(p.thickness / 2, both=True)
 
     # Round the four outer vertical corners (the only full-height Z edges).
     plan_round = p.plan_round_used
@@ -422,10 +452,13 @@ def main() -> None:
         export(build_bracket(Params(**base)), args.out, "shared_wall_bracket_v2")
         export(build_bracket(Params(**base, anchor=True)), args.out, "shared_wall_bracket_v2_anchor")
         export(build_coupon(Params(**base)), args.out, "fit_test_coupon_v2")
+        # The staggered bracket has no anchor variant: at 18 mm wide there is no
+        # room for a tie saddle with sound legs.  Tether a staggered wall by
+        # looping the tie around a rear upright tube.
+        stag = {k: v for k, v in base.items() if k != "bar_depth"}
         for letter, mirror in (("a", False), ("b", True)):
-            name = f"shared_wall_bracket_staggered_{letter}"
-            export(build_bracket(Params.staggered(**base, mirror=mirror)), args.out, name)
-            export(build_bracket(Params.staggered(**base, mirror=mirror, anchor=True)), args.out, f"{name}_anchor")
+            export(build_bracket(Params.staggered(**stag, mirror=mirror)), args.out,
+                   f"shared_wall_bracket_staggered_{letter}")
     except ValueError as exc:
         log.error("Invalid parameters: %s", exc)
         raise SystemExit(2)
