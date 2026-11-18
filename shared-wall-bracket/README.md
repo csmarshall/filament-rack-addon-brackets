@@ -146,6 +146,9 @@ variant's collar as a detail. B is A's mirror image and is described on the
 sheet, not drawn.
 
 <!-- blueprint:blueprint_staggered -->
+[![Blueprint of the staggered bracket, A and B](blueprint_staggered.svg)](blueprint_staggered.svg)
+
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
 <!-- /blueprint -->
 
 ### End bracket, left and right
@@ -154,11 +157,17 @@ The anchored left bracket, with a section and the anchor detail. The right
 bracket is its mirror image.
 
 <!-- blueprint:blueprint_end -->
+[![Blueprint of the end bracket, left and right](blueprint_end.svg)](blueprint_end.svg)
+
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
 <!-- /blueprint -->
 
 ### Fit test coupon
 
 <!-- blueprint:blueprint_coupon -->
+[![Blueprint of the fit-test coupon](blueprint_coupon.svg)](blueprint_coupon.svg)
+
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
 <!-- /blueprint -->
 
 ## Design

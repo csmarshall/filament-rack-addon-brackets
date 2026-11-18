@@ -43,6 +43,9 @@ ASA.
 ## Drawing
 
 <!-- blueprint:blueprint -->
+[![Blueprint of the anti-tip wall plate](blueprint.svg)](blueprint.svg)
+
+<sub>Drawing generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
 <!-- /blueprint -->
 
 Profile, plan, end and isometric views, projected from the CAD model with the
