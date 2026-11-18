@@ -9,9 +9,9 @@ Stock bracket (Hizypaixin 9-tier filament rack, Amazon B0FFZ8SSQX), as measured:
     edge, at 84 mm pitch.  Upright tubes plug into each leg from both ends.
 
 This part is two stock brackets back to back in one piece: same side profile,
-40 mm thick, 18 mm deep bar sockets on BOTH faces with a 4 mm web between, and
+40 mm thick, 16 mm deep bar sockets on BOTH faces with an 8 mm web between, and
 a single centred row of upright sockets, so two rack columns can share one wall.
-Every socket is 18 mm deep, as on the stock part; the upright divider is 4 mm
+Upright sockets are 18 mm deep and bar sockets 16 mm, as on the stock part; the upright divider is 4 mm
 with a 4 mm through-hole.
 
 Coordinate system (also the print orientation: flat edge on the bed):
@@ -60,7 +60,7 @@ class Params:
     upright_depth_flat: float = 18.0  # upright socket depth from the flat edge
     upright_depth_leg: float = 18.0   # upright socket depth from the leg end
     upright_vent_d: float = 4.0       # small through-hole in the divider, as on the stock part
-    bar_depth: float = 18.0           # bar socket depth, same as every other socket
+    bar_depth: float = 16.0           # bar socket depth, measured on the stock bracket
     # The solid divider between the two upright sockets is
     # height - upright_depth_flat - upright_depth_leg.  It sets tier pitch and
     # MUST equal the stock part's divider.
@@ -70,7 +70,7 @@ class Params:
     corner_radius: float = 20.0      # curved inside corner between leg and rail
 
     # --- Design choices -------------------------------------------------------
-    # Two 18 mm bar sockets plus a 4 mm centre web.  Bars seat exactly as deep
+    # Two 16 mm bar sockets plus an 8 mm centre web.  Bars seat exactly as deep
     # as in a stock bracket, so column width matches a stock rack.
     thickness: float = 40.0
     # Staggered layout (see Params.staggered): 0 keeps the two faces' bar

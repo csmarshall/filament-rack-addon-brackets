@@ -25,7 +25,7 @@ the stock plastic bracket from the listing above. Measure yours before printing:
   26, 110, 194 and 278 mm from the end (84 mm pitch).
 - An upright socket in each leg from both ends: one opens on the flat edge, one
   on the leg end, centred in the leg.
-- Every socket is 18 mm deep. The two upright sockets in a leg are separated by
+- Upright sockets are 18 mm deep and bar sockets 16 mm. The two upright sockets in a leg are separated by
   a 4 mm divider with a 4 mm through-hole.
 
 If any of these differ on your rack, change the values in the part's source and

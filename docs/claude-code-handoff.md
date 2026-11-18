@@ -31,7 +31,7 @@ for a full-height wall.
 - Upright sockets: one opens on the flat edge and one on the leg end, at each
   end of the bracket, centred across the thickness and about 9 mm in from the
   end. The stock ends are rounded around the socket.
-- Every socket is 18 mm deep. The two upright sockets in a leg are separated
+- Upright sockets are 18 mm deep and bar sockets 16 mm. The two upright sockets in a leg are separated
   by a 4 mm divider with a 4 mm hole through it.
 
 ## Current state
@@ -40,7 +40,7 @@ The script builds three parts and exports STEP + STL: the bracket, a variant
 with a zip-tie saddle on the rear end for wall tethering, and a small fit-test coupon.
 Axes: X = thickness (along the bars), Y = length, Z = height (along the
 uprights), with z=0 on the flat edge. It prints flat edge down, no supports.
-The bracket is 40 x 305 x 40 mm: two 18 mm bar sockets plus a 4 mm centre web.
+The bracket is 40 x 305 x 40 mm: two 16 mm bar sockets plus an 8 mm centre web.
 All three STLs came out watertight.
 
 The four outer vertical corners are rounded at 10 mm (`plan_round`). That is
@@ -57,9 +57,8 @@ Still not measured:
 - Upright socket centre from the end (9 mm, inferred from a 12 mm bore in an
   18 mm leg).
 
-One inconsistency in my measurements: the stock bracket is 18 mm thick with
-18 mm deep bar holes, which can't both be exact for a blind hole. It doesn't
-change this part.
+The stock bar sockets were first recorded as 18 mm deep; re-measured, they are
+16 mm deep in an 18 mm thick bracket. Both layouts now use 16 mm.
 
 ## Constraints that matter
 
@@ -109,9 +108,9 @@ Stock bracket (Hizypaixin 9-tier filament rack, Amazon B0FFZ8SSQX), as measured:
     edge, at 84 mm pitch.  Upright tubes plug into each leg from both ends.
 
 This part is two stock brackets back to back in one piece: same side profile,
-40 mm thick, 18 mm deep bar sockets on BOTH faces with a 4 mm web between, and
+40 mm thick, 16 mm deep bar sockets on BOTH faces with an 8 mm web between, and
 a single centred row of upright sockets, so two rack columns can share one wall.
-Every socket is 18 mm deep, as on the stock part; the upright divider is 4 mm
+Upright sockets are 18 mm deep and bar sockets 16 mm, as on the stock part; the upright divider is 4 mm
 with a 4 mm through-hole.
 
 Coordinate system (also the print orientation: flat edge on the bed):
@@ -160,7 +159,7 @@ class Params:
     upright_depth_flat: float = 18.0  # upright socket depth from the flat edge
     upright_depth_leg: float = 18.0   # upright socket depth from the leg end
     upright_vent_d: float = 4.0       # small through-hole in the divider, as on the stock part
-    bar_depth: float = 18.0           # bar socket depth, same as every other socket
+    bar_depth: float = 16.0           # bar socket depth, measured on the stock bracket
     # The solid divider between the two upright sockets is
     # height - upright_depth_flat - upright_depth_leg.  It sets tier pitch and
     # MUST equal the stock part's divider.
@@ -170,7 +169,7 @@ class Params:
     corner_radius: float = 20.0      # curved inside corner between leg and rail
 
     # --- Design choices -------------------------------------------------------
-    # Two 18 mm bar sockets plus a 4 mm centre web.  Bars seat exactly as deep
+    # Two 16 mm bar sockets plus an 8 mm centre web.  Bars seat exactly as deep
     # as in a stock bracket, so column width matches a stock rack.
     thickness: float = 40.0
     # Staggered layout (see Params.staggered): 0 keeps the two faces' bar
