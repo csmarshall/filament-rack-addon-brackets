@@ -31,6 +31,10 @@ along a layer line.
 
 No supports. Use 4 or more wall loops; at this size that prints nearly solid.
 
+**Do not print it in PLA.** The tie keeps the plate under constant load, and
+PLA slowly deforms under constant load and softens when warm. Use PETG, ABS or
+ASA.
+
 ## Files
 
 | Path | What it is |

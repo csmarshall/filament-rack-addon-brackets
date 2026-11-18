@@ -8,6 +8,9 @@ storage rack sold on Amazon as the
 > **Use at your own risk.** These are untested hobby designs shared for
 > educational purposes, with no warranty and no load rating. Read the
 > [disclaimer](DISCLAIMER.md) before printing or installing anything.
+>
+> **Do not print these parts in PLA.** They carry a constant load, and PLA
+> slowly deforms under constant load and softens when warm.
 
 ## Does your rack match?
 

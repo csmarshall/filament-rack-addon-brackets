@@ -12,6 +12,11 @@ purposes. They are not commercial products and not certified safety devices.
 - **3D-printed parts vary.** Strength depends on your printer, material,
   settings, print orientation and the condition of your filament. A part that
   holds for one person may fail for another.
+- **Do not print these parts in PLA.** PLA creeps (slowly deforms) under a
+  constant load and softens in a warm room, a sunny spot or near a heated
+  printer. A PLA part can hold when installed and fail weeks later without
+  warning. The material suggestions in this repository are suggestions only
+  and are not a guarantee that any material is safe.
 - **The rack itself has limits.** These parts do not increase the rated
   capacity of the storage rack they attach to. A loaded rack can weigh well
   over 100 lb (45 kg) and can tip or collapse.

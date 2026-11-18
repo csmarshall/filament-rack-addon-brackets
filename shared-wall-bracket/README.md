@@ -66,6 +66,8 @@ sits flush against the wall.
   variant).
 - 5 wall loops with the Arachne wall generator, so the 1.85, 2.85 and 3.85 mm
   socket walls print as solid perimeters. 15% infill.
+- **Not PLA.** The bracket is under constant load, and PLA slowly deforms
+  under constant load and softens when warm.
 - PETG or ABS. A 305 mm ABS part is prone to warping; use a brim and keep
   draughts off it.
 
