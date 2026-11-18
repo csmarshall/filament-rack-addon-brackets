@@ -72,7 +72,6 @@ project. Each part's README has the same table with the reasons.
 | `shared-wall-bracket/` | Source, STL/STEP/3MF models and notes for the shared-wall bracket. |
 | `anti-tip-wall-plate/` | Source and STL/STEP models for the anti-tip wall plate. |
 | `tools/make_u1_project.py` | Packages an STL as a Snapmaker Orca project for the Snapmaker U1. |
-| `tools/make_release.py` | Builds the two release archives. |
 | `PRINT_SETTINGS.md` | Slicer settings for every part, in one place. |
 | `docs/claude-code-handoff.md` | Project brief with the bracket source inline. |
 
@@ -87,15 +86,15 @@ pip install -r requirements.txt
 
 Releases are numbered `MAJOR.MINOR.PATCH`. The patch number goes up
 automatically with every change merged to `main`. Major and minor bumps are a
-deliberate manual choice, made by running the Release workflow by hand, for a
+deliberate manual choice, made by running the Publish workflow by hand, for a
 change that alters how a part fits or is used.
 
 ## Licence
 
 The designs are free to print and remix for non-commercial use, with credit:
-[CC BY-NC-SA 4.0](LICENSE-DESIGNS.md). **Selling these files, or prints made
+[CC BY-NC-SA 4.0](LICENSES/CC-BY-NC-SA-4.0.txt). **Selling these files, or prints made
 from them, needs permission.** The scripts and other code are
-[MIT](LICENSE-CODE). [LICENSE.md](LICENSE.md) says which file is under which.
+[MIT](LICENSES/MIT.txt). [LICENSE.md](LICENSE.md) says which file is under which.
 See also the [disclaimer](DISCLAIMER.md).
 
 **Why these licences:** so that anyone can print these parts and improve on

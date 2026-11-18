@@ -3,11 +3,12 @@
 Copyright (c) 2026 Charles Marshall.
 
 This repository is under two licences. Which one applies depends on the file.
+[`REUSE.toml`](REUSE.toml) records the same split for tools, and the full licence texts are in [`LICENSES/`](LICENSES/).
 
 | What | Files | Licence |
 |---|---|---|
-| **Models, print files and drawings** | STL, STEP and 3MF files; drawings, diagrams and other images; the READMEs and other documentation | [CC BY-NC-SA 4.0](LICENSE-DESIGNS.md): **not for resale** |
-| **Scripts and code** | Every `.py` script, and the workflows under `.github/` | [MIT](LICENSE-CODE) |
+| **Models, print files and drawings** | STL, STEP and 3MF files; drawings, diagrams and other images; the READMEs and other documentation | [CC BY-NC-SA 4.0](LICENSES/CC-BY-NC-SA-4.0.txt): **not for resale** |
+| **Scripts and code** | Every `.py` script, everything in `tools/`, and the workflows under `.github/` | [MIT](LICENSES/MIT.txt) |
 
 ## What that means in practice
 

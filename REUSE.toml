@@ -1,5 +1,5 @@
 # Which licence covers which file, as LICENSE.md explains in words. The blueprint generator reads this to print the licence on each drawing,
-# so it must stay accurate. The designs are the default; the general-purpose tooling is the exception. When several annotations match a file,
+# so it must stay accurate. Models, print files, drawings and docs are the default; scripts and code (every .py file, tools/ and .github/) are the exception. When several annotations match a file,
 # the last one wins.
 version = 1
 
@@ -9,6 +9,6 @@ SPDX-FileCopyrightText = "2026 Charles Marshall"
 SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
 
 [[annotations]]
-path = ["tools/**", ".github/**"]
+path = ["tools/**", ".github/**", "**/*.py"]
 SPDX-FileCopyrightText = "2026 Charles Marshall"
 SPDX-License-Identifier = "MIT"
