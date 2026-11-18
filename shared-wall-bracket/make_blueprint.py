@@ -22,6 +22,7 @@ import numpy as np
 
 from blueprint import Sheet, TitleInfo, View, fmt, git_dates, project, revisions, section_loops
 from blueprint.readme import embed, update
+from blueprint.reuse_lookup import licence_for
 from shared_wall_bracket import Params, build_bracket
 
 LOG_FORMAT = "%(asctime)s %(levelname)-5s %(name)s: %(message)s"
@@ -35,6 +36,8 @@ DEFAULT_OUT = Path(__file__).with_name("blueprint")  # the README embed is only 
 
 def draw(p: Params, out_stem: Path) -> None:
     dates = git_dates(Path(__file__).resolve().parent)  # before anything is written, so this run's own output does not read as a local edit
+    # The drawing's own licence and copyright, from REUSE.toml for the SVG this run writes (not the script's): fails if REUSE.toml does not cover it.
+    licence = licence_for(out_stem.with_name(f"{out_stem.name}.svg"))
     solid = build_bracket(p).val()
     shape = solid.wrapped
     L, H, T, R, G = p.length, p.height, p.thickness, p.rail_height, p.leg_length
@@ -122,7 +125,7 @@ def draw(p: Params, out_stem: Path) -> None:
     sheet.title_block(TitleInfo(
         title="SHARED-WALL BRACKET", drawing_number="FRB-001", for_="9-tier modular filament storage rack (Amazon B0FFZ8SSQX)",
         material="ABS or PETG. Not PLA.", source="shared-wall-bracket/shared_wall_bracket.py", drawn_by="C. MARSHALL", company="Shermer Works",
-        started=dates.started, updated=rendered, revisions=revisions(dates, rendered),
+        started=dates.started, updated=rendered, revisions=revisions(dates, rendered), licence=licence.licence, copyright=licence.copyright,
     ), SCALE, detail_scales=(DETAIL,))
     sheet.notes([
         f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",

@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   blueprint:
-    uses: csmarshall/common-blueprint-generator/.github/workflows/render.yml@main
+    uses: csmarshall/common-blueprint-generator/.github/workflows/render.yml@v1
     with:
       # cadquery brings its own OCP 7.9; the generator is installed without the ocp extra so it uses that one.
       render-command: >-

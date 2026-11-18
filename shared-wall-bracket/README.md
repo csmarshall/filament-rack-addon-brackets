@@ -118,7 +118,7 @@ wall.
 <!-- blueprint:blueprint -->
 [![Blueprint of the shared-wall bracket](blueprint.svg)](blueprint.svg)
 
-<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model.</sub>
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
 <!-- /blueprint -->
 
 Top, front, bottom and end views, a section through a bar socket, and an
