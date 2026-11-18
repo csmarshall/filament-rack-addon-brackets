@@ -12,7 +12,8 @@ This part is two stock brackets back to back in one piece: same side profile,
 40 mm thick, 16 mm deep bar sockets on BOTH faces with an 8 mm web between, and
 a single centred row of upright sockets, so two rack columns can share one wall.
 Upright sockets are 18 mm deep and bar sockets 16 mm, as on the stock part; the upright divider is 4 mm
-with a 4 mm through-hole.
+with a 4 mm through-hole, and each pair of opposite bar sockets is joined by a
+4 mm vent through the web.
 
 Coordinate system (also the print orientation: flat edge on the bed):
     X = thickness (direction the horizontal bars run)
@@ -61,6 +62,10 @@ class Params:
     upright_depth_leg: float = 18.0   # upright socket depth from the leg end
     upright_vent_d: float = 4.0       # small through-hole in the divider, as on the stock part
     bar_depth: float = 16.0           # bar socket depth, measured on the stock bracket
+    # In-line bracket only: a small hole through the centre web joining each
+    # pair of opposite bar sockets, like the one in the upright divider.  It
+    # lets air out as a bar is pushed home.  0 disables it.
+    bar_vent_d: float = 4.0
     # The solid divider between the two upright sockets is
     # height - upright_depth_flat - upright_depth_leg.  It sets tier pitch and
     # MUST equal the stock part's divider.
@@ -194,6 +199,8 @@ class Params:
     def validate(self) -> None:
         if self.divider < 1.0:
             raise ValueError(f"upright sockets leave a {self.divider:.1f} mm divider; need >= 1 mm")
+        if self.bar_vent_d >= self.bore:
+            raise ValueError("bar_vent_d must be smaller than the socket, or the bar has nothing to stop against")
         if self.stagger <= 0 and self.web < 2.0:
             raise ValueError(f"bar sockets leave a {self.web:.1f} mm centre web; need >= 2 mm")
         if self.stagger > 0:
@@ -354,6 +361,14 @@ def build_bracket(p: Params) -> cq.Workplane:
                 .extrude(sign * p.bar_depth)
             )
             body = body.cut(sock)
+
+    # Vent through the centre web between each pair of opposite bar sockets.
+    if p.stagger <= 0 and p.bar_vent_d > 0:
+        for y in p.bar_y:
+            vent = cq.Solid.makeCylinder(p.bar_vent_d / 2, p.web + 2.0,
+                                         pnt=cq.Vector(-p.web / 2 - 1.0, y, p.bar_z), dir=cq.Vector(1, 0, 0))
+            body = body.cut(cq.Workplane("XY").add(vent))
+        log.debug("bar-socket vents: %d x %.1f mm through the %.1f mm web", len(p.bar_y), p.bar_vent_d, p.web)
 
     # Lead-in on every socket mouth, cut as a short cone.
     if p.chamfer > 0:

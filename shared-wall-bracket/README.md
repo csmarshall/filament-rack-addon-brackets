@@ -123,7 +123,8 @@ from the same parameters, so the sheet matches what is printed. A vector copy
 is in [`blueprint.svg`](blueprint.svg).
 
 > The sheet currently shows the bar sockets as 18 mm deep with a 4 mm web.
-> The model now has 16 mm sockets and an 8 mm web, to match the stock bracket.
+> The model now has 16 mm sockets, an 8 mm web and a 4 mm vent through the
+> web, to match the stock bracket.
 > Everything else on the sheet is current; it is due to be re-rendered.
 
 ## Design
@@ -132,6 +133,9 @@ The drawing and the points below describe the in-line bracket. The staggered
 one shares its leg height, bar socket position and divider.
 
 - 40 x 305 x 40 mm: two 16 mm bar sockets and an 8 mm centre web.
+- A 4 mm vent runs through the web between each pair of opposite bar sockets,
+  like the hole in the upright divider, so a bar is not pushed in against
+  trapped air. The bar still seats on the 4 mm of web around the vent.
 - The upright divider is 4 mm to match the stock part. It sets tier height, so
   it must not change, or the centre wall drifts out of level with the outer
   walls on every tier.
