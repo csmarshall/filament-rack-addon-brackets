@@ -8,7 +8,7 @@ automatic layout cannot choose. Every view is a hidden-line projection of the CA
 model is built from.
 
 Usage:
-    python3 make_blueprint.py                 # writes blueprint.png and blueprint.svg, and refreshes the README embed
+    python3 make_blueprint.py                 # writes blueprint.svg and refreshes the README embed
     python3 make_blueprint.py --log-level DEBUG
 """
 import argparse
@@ -30,6 +30,7 @@ log = logging.getLogger("blueprint")
 SCALE = 0.75   # sheet mm per model mm for the main views
 DETAIL = 1.5   # sheet mm per model mm for the section
 ISO = 0.36     # the isometric is not to scale
+DEFAULT_OUT = Path(__file__).with_name("blueprint")  # the README embed is only refreshed for this output
 
 
 def draw(p: Params, out_stem: Path) -> None:
@@ -41,6 +42,10 @@ def draw(p: Params, out_stem: Path) -> None:
     log.info("projecting views of a %.0f x %.0f x %.0f mm part", T, L, H)
     sheet = Sheet("B")
     x_left = 34.0
+    per_face = len(p.bar_y)                               # bar sockets on each long face
+    cut = p.bar_y[min(1, per_face - 1)]                   # section A-A goes through the second socket (the first if there is only one)
+    dim_at = p.bar_y[min(2, per_face - 1)]                # where the socket-height dimension is drawn
+    has_vent = p.stagger <= 0 and p.bar_vent_d > 0        # the same condition the model cuts the web vent under
 
     # --- Front: looking at a hole face. Model (Y, Z) -> sheet. ---------------------
     front = View(sheet, project(shape, (1, 0, 0), (0, 0, 1)), (x_left, 150.0), SCALE).draw()
@@ -52,11 +57,12 @@ def draw(p: Params, out_stem: Path) -> None:
     front.dim_h(0, G, H, 7)
     front.dim_v(0, H, L, 9)
     front.dim_v(0, R, L, 17)
-    front.dim_v(0, p.bar_z, p.bar_y[2], -14, ext=False)
-    front.leader((p.bar_y[1] + p.bore / 2 * 0.7, p.bar_z + p.bore / 2 * 0.7), (x_left + 70, 186), f"8x {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep (4 per face)")
+    front.dim_v(0, p.bar_z, dim_at, -14, ext=False)
+    front.leader((cut + p.bore / 2 * 0.7, p.bar_z + p.bore / 2 * 0.7), (x_left + 70, 186),
+                 f"{2 * per_face}x {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep ({per_face} per face)")
     front.leader((G + p.corner_radius * 0.29, R + p.corner_radius * 0.29), (x_left + 22, 186), f"R{fmt(p.corner_radius)}")
-    # Cutting plane A-A through the second bar socket.
-    sy = p.bar_y[1]
+    # Cutting plane A-A.
+    sy = cut
     a, b = front.to_sheet((sy, -4))[0], front.to_sheet((sy, H + 3))[0]
     sheet.centre_line(tuple(a), tuple(b))
     for q in (a, b):
@@ -64,11 +70,11 @@ def draw(p: Params, out_stem: Path) -> None:
 
     # --- Top: looking down on the leg ends. ------------------------------------------
     top = View(sheet, project(shape, (0, 0, 1), (-1, 0, 0)), (x_left, 226.0), SCALE).draw()
-    top.caption("TOP", "leg ends", below=half_t * SCALE * 0 + 4)
+    top.caption("TOP", "leg ends", below=4)
     top.dim_v(-half_t, half_t, 0, -9)
     top.dim_h(0, p.upright_from_end, half_t, 7)
     top.leader((L - p.upright_from_end + p.bore / 2 * 0.7, p.bore / 2 * 0.7), (x_left + 150, 255),
-               f"4x {fmt(p.bore)} dia, {fmt(p.upright_depth_leg)} deep (2 here, 2 on the flat edge)")
+               f"4x {fmt(p.bore)} dia, {fmt(p.upright_depth_leg)} deep (2 here, 2 on the flat edge)")  # one per leg end and one per leg on the flat edge: two legs by design
     top.leader((p.plan_round * 0.29, half_t - p.plan_round * 0.29), (x_left + 22, 255), f"R{fmt(p.plan_round)}")
 
     # --- Bottom: the flat edge that sits on the print bed. ---------------------------
@@ -120,23 +126,23 @@ def draw(p: Params, out_stem: Path) -> None:
     ), SCALE, detail_scales=(DETAIL,))
     sheet.notes([
         f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
-        f"Bar sockets: 4 on each long face, centred {fmt(p.bar_z)} above the flat edge, {fmt(p.web)} web between opposite pairs "
-        f"with a {fmt(p.bar_vent_d)} dia vent through it.",
+        f"Bar sockets: {per_face} on each long face, centred {fmt(p.bar_z)} above the flat edge, {fmt(p.web)} web between opposite pairs"
+        + (f" with a {fmt(p.bar_vent_d)} dia vent through it." if has_vent else "."),
         f"Upright sockets: one from each end of each leg, on the centre line, {fmt(p.divider)} divider between, "
         f"{fmt(p.upright_vent_d)} dia hole through the divider.",
         "Print flat edge down, no supports. 5 wall loops (Arachne), 15% gyroid infill.",
         "Untested hobby design. No load rating. See DISCLAIMER.md.",
     ])
-    written = sheet.save(out_stem)
-    # Keep the drawing and its credit line current in this folder's README, between <!-- blueprint:blueprint --> and <!-- /blueprint -->.
-    readme = Path(__file__).with_name("README.md")
-    svg = next(w for w in written if w.suffix == ".svg")
-    update(readme, out_stem.name, embed(readme, svg, "Blueprint of the shared-wall bracket", Path(__file__).with_name("shared_wall_bracket.py")))
+    (svg,) = sheet.save(out_stem, formats=("svg",))
+    if out_stem == DEFAULT_OUT:
+        # Keep the drawing and its credit line current in this folder's README, between <!-- blueprint:blueprint --> and <!-- /blueprint -->.
+        readme = Path(__file__).with_name("README.md")
+        update(readme, "blueprint", embed(readme, svg, "Blueprint of the shared-wall bracket", Path(__file__).with_name("shared_wall_bracket.py")))
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", type=Path, default=Path(__file__).with_name("blueprint"), help="output path without extension")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output path without extension (the README embed is refreshed only for the default)")
     ap.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     args = ap.parse_args()
     logging.basicConfig(level=args.log_level, format=LOG_FORMAT)

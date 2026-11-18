@@ -25,4 +25,4 @@ jobs:
         uv venv -q .venv &&
         uv pip install -q --python .venv -r requirements.txt "$BLUEPRINT_PACKAGE" &&
         cd shared-wall-bracket && ../.venv/bin/python make_blueprint.py
-      commit-paths: shared-wall-bracket/blueprint.svg shared-wall-bracket/blueprint.png shared-wall-bracket/README.md
+      commit-paths: shared-wall-bracket/blueprint.svg shared-wall-bracket/README.md
