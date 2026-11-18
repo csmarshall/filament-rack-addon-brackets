@@ -42,7 +42,7 @@ class Params:
     plate_width: float = 22.0     # W; also the length of the saddle tunnel
     plate_thickness: float = 5.0  # N
     leg: float = 4.75             # saddle leg thickness (U)
-    bar: float = 4.5              # saddle bar thickness (N)
+    bar: float = 6.0              # saddle bar thickness (N)
     gusset: float = 3.0           # 45 degree foot where each leg meets the plate
     corner: float = 2.0           # 45 degree break on the bar's outer corners
     screw_d: float = 4.8          # clearance for a #8 / 4 mm pan-head screw

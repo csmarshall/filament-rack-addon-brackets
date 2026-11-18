@@ -37,7 +37,7 @@ for a full-height wall.
 ## Current state
 
 The script builds three parts and exports STEP + STL: the bracket, a variant
-with two rear screw ears for wall anchoring, and a small fit-test coupon.
+with a zip-tie saddle on the rear end for wall tethering, and a small fit-test coupon.
 Axes: X = thickness (along the bars), Y = length, Z = height (along the
 uprights), with z=0 on the flat edge. It prints flat edge down, no supports.
 The bracket is 40 x 305 x 40 mm: two 18 mm bar sockets plus a 4 mm centre web.
@@ -119,6 +119,9 @@ Coordinate system (also the print orientation: flat edge on the bed):
     Y = length, front to back
     Z = height (direction the upright tubes run); z=0 is the flat edge
 
+The anchor variant adds a zip-tie saddle on the rear end face for tethering
+the rack to a wall plate.
+
 Usage:
     python3 shared_wall_bracket.py
     python3 shared_wall_bracket.py --log-level DEBUG --fit-clearance 0.35
@@ -173,10 +176,14 @@ class Params:
     # across the leg end and along the rail top and shaves 0.1-0.4 mm off the
     # walls at the socket mouths.  Cosmetic only; enable knowing that cost.
     edge_round: float = 0.0
-    anchor: bool = False             # add rear ears with screw holes for wall anchoring
-    anchor_ear: float = 16.0         # how far each ear sticks out sideways
-    anchor_thickness: float = 4.0
-    anchor_screw_d: float = 5.0
+    anchor: bool = False             # add a zip-tie saddle on the rear end face
+    tie_slot_width: float = 13.0     # along X; clears a 7.6 mm tie and spans the upright socket
+    tie_slot_depth: float = 3.2      # along Y; clears a 1.9 mm thick tie
+    saddle_leg: float = 5.0          # thickness of each saddle leg (X)
+    saddle_bar: float = 6.0          # thickness of the bar the tie pulls on (Y)
+    saddle_height: float = 22.0      # how far the saddle runs up from the flat edge (Z)
+    saddle_gusset: float = 3.0       # 45 degree foot where each leg meets the bracket
+    saddle_corner: float = 2.0       # 45 degree break on the bar's outer corners
 
     @property
     def bore(self) -> float:
@@ -208,6 +215,13 @@ class Params:
             raise ValueError("plan_round would thin the wall around an upright socket below 3 mm")
         if self.edge_round > self.rail_height - (self.bar_z + self.bore / 2) - 2.0:
             raise ValueError("edge_round would thin the wall over a bar socket below 2 mm")
+        if self.anchor:
+            if self.tie_slot_width / 2 < self.bore / 2 + 0.2:
+                raise ValueError("tie_slot_width must be wider than the upright socket so the saddle legs miss it")
+            if self.tie_slot_width / 2 + self.saddle_leg + self.saddle_gusset > self.thickness / 2:
+                raise ValueError("tie saddle is wider than the bracket")
+            if self.saddle_height > self.height:
+                raise ValueError("saddle_height is taller than the bracket")
         # Bar sockets and upright sockets must not meet anywhere along the length.
         up_lo = self.upright_from_end - self.bore / 2
         up_hi = self.upright_from_end + self.bore / 2
@@ -283,27 +297,32 @@ def build_bracket(p: Params) -> cq.Workplane:
         except Exception as exc:
             log.error("Top-edge rounding failed, leaving those edges sharp: %s", exc)
 
-    # Optional rear ears: thin plates flush with the back of the rack, one each
-    # side of the rear leg, above bar level, each with a screw hole.
+    # Optional tie saddle on the rear end face, in the style of a furniture
+    # anti-tip kit: a zip tie runs through the saddle and through a matching
+    # plate on the wall (see ../anti-tip-wall-plate).  The saddle is one profile
+    # extruded up from the bed, so the layers run unbroken through both legs and
+    # the bar, and a pull toward the wall loads the plastic along the layers.
+    # The slot is wider than the upright socket, so both saddle legs join solid
+    # plastic either side of the socket and not the thin wall behind it.
     if p.anchor:
-        inset = p.plan_round   # reach back past the rounded corner into solid plastic
-        for sign in (-1, 1):
-            x0 = sign * p.thickness / 2
-            ear = (
-                cq.Workplane("XY")
-                .box(p.anchor_ear + inset, p.anchor_thickness, H - R, centered=(False, False, False))
-                .translate((x0 - inset if sign > 0 else x0 - p.anchor_ear, L - p.anchor_thickness, R))
-            )
-            body = body.union(ear)
-            hole = (
-                cq.Workplane("XZ")
-                .workplane(offset=-(L + 1))
-                .center(x0 + sign * p.anchor_ear / 2, (R + H) / 2)
-                .circle(p.anchor_screw_d / 2)
-                .extrude(p.anchor_thickness + 2)
-            )
-            body = body.cut(hole)
-        log.debug("anchor ears added at y=%.1f", L - p.anchor_thickness)
+        ox = p.tie_slot_width / 2 + p.saddle_leg          # outer half-width of the saddle
+        top = L + p.tie_slot_depth + p.saddle_bar          # rearmost face of the bar
+        g, c = p.saddle_gusset, p.saddle_corner
+        outline = [
+            (-ox - g, L - 2), (ox + g, L - 2), (ox + g, L), (ox, L + g),
+            (ox, top - c), (ox - c, top), (-ox + c, top), (-ox, top - c),
+            (-ox, L + g), (-ox - g, L),
+        ]
+        saddle = cq.Workplane("XY").polyline(outline).close().extrude(p.saddle_height)
+        slot = (
+            cq.Workplane("XY")
+            .center(0, L + p.tie_slot_depth / 2)
+            .rect(p.tie_slot_width, p.tie_slot_depth)
+            .extrude(p.saddle_height)
+        )
+        body = body.union(saddle.cut(slot))
+        log.debug("tie saddle added: slot %.1f x %.1f mm, projects %.1f mm behind the bracket",
+                  p.tie_slot_width, p.tie_slot_depth, top - L)
 
     # Upright sockets: one row down the centre (x=0), blind from each end of the leg.
     upright_ys = [p.upright_from_end, L - p.upright_from_end]

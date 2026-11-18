@@ -1,10 +1,10 @@
 # Anti-tip wall plate
 
-A small plate that screws to the wall, with a raised saddle for a zip tie. The
-tie runs through the saddle and around a steel upright of the rack, so the
-rack cannot tip forward. It follows the layout of the common two-plate
-furniture anti-tip kit; on this rack the second plate is not needed because
-the tie goes straight around the tube.
+A small plate that screws to the wall, with a raised saddle for a zip tie. It
+follows the layout of the common two-plate furniture anti-tip kit. On the rack
+side the tie goes through the saddle on the
+[shared-wall bracket's anchor variant](../shared-wall-bracket/#anchor-variant),
+or straight around a steel upright.
 
 ![Preview](preview.png)
 
@@ -14,8 +14,8 @@ the tie goes straight around the tube.
 
 ## Use
 
-- Fit it as high on the rack as you can: loop the tie around a rear upright
-  just under the top bracket.
+- Fit it as high on the rack as you can: through the anchor variant's saddle on
+  the top tier, or around a rear upright just under the top bracket.
 - Use a bought nylon zip tie, not a printed one. The slot is 9.5 x 3.2 mm, for
   ties up to 7.6 mm wide. A 250 mm tie is a reasonable length.
 - Two screw holes, 4.8 mm, for #8 or 4 mm pan-head screws. Fix into a stud
@@ -40,7 +40,7 @@ ASA.
 | Path | What it is |
 |---|---|
 | `wall_plate.py` | Parametric CadQuery source. |
-| `models/anti_tip_wall_plate.stl` / `.step` | The plate: 60 x 22 mm, 12.7 mm tall. |
+| `models/anti_tip_wall_plate.stl` / `.step` | The plate: 60 x 22 mm, 14.2 mm tall. |
 
 ## Regenerating
 

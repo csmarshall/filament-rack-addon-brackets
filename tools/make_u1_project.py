@@ -60,9 +60,11 @@ META_KEYS = {"type", "name", "inherits", "from", "setting_id", "instantiation", 
              "description", "renamed_from", "version", "url", "is_custom_defined",
              "compatible_printers", "compatible_printers_condition",
              "compatible_prints", "compatible_prints_condition"}
-APP_TAG = "Snapmaker_Orca-2.0.0"     # the loader only checks the "Snapmaker_Orca-" prefix
-# Snapmaker Orca writes the "Snapmaker_Orca:3mfVersion" metadata name without
-# declaring the prefix.  Declaring it (any URI) keeps strict 3MF readers happy.
+# The "Application" tag is how these slicers recognise a project file; without
+# a recognised prefix they load the geometry only.  Snapmaker Orca accepts
+# "Snapmaker_Orca-" and "BambuStudio-"; OrcaSlicer and Bambu Studio accept only
+# "BambuStudio-" (OrcaSlicer writes that prefix itself), so use the common one.
+APP_TAG = "BambuStudio-02.00.00.00"
 
 
 def resolve(profile_dir: Path, kind: str, name: str) -> dict:
@@ -143,9 +145,9 @@ def model_xml(mesh: trimesh.Trimesh, name: str, transform: str) -> str:
     verts = "\n".join(f'     <vertex x="{x:.4f}" y="{y:.4f}" z="{z:.4f}"/>' for x, y, z in mesh.vertices)
     tris = "\n".join(f'     <triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in mesh.faces)
     return f'''<?xml version="1.0" encoding="UTF-8"?>
-<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:Snapmaker_Orca="http://schemas.snapmaker.com/package/2025">
+<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021">
  <metadata name="Application">{APP_TAG}</metadata>
- <metadata name="Snapmaker_Orca:3mfVersion">1</metadata>
+ <metadata name="BambuStudio:3mfVersion">1</metadata>
  <metadata name="Title">{escape(name)}</metadata>
  <resources>
   <object id="1" name="{escape(name)}" type="model">
