@@ -2,7 +2,9 @@
 
 Instructions for a Claude Code session on Charles's machine picking this repo
 up from the cloud session that built it (2026-11-18). Read this before doing
-anything else. Don't merge, rebase, push or edit until asked.
+anything else, then `SESSION_HANDOFF.md` for the background: measurements,
+design decisions, what went wrong, and how Charles works. Don't merge, rebase,
+push or edit until asked.
 
 ## 1. Get the repo
 
