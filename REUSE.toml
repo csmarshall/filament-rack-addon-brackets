@@ -1,0 +1,14 @@
+# Which licence covers which file, as LICENSE.md explains in words. The blueprint generator reads this to print the licence on each drawing,
+# so it must stay accurate. The designs are the default; the general-purpose tooling is the exception. When several annotations match a file,
+# the last one wins.
+version = 1
+
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 Charles Marshall"
+SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
+
+[[annotations]]
+path = ["tools/**", ".github/**"]
+SPDX-FileCopyrightText = "2026 Charles Marshall"
+SPDX-License-Identifier = "MIT"
