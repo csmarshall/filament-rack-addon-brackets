@@ -13,6 +13,9 @@ brackets back to back in one piece, with bar sockets on both faces and a single
 centred row of upright sockets. Nine make a full-height shared wall, and free
 up nine stock brackets and a set of uprights from the second kit.
 
+> **Use at your own risk.** Untested hobby design, no warranty, no load rating.
+> See the [disclaimer](../DISCLAIMER.md).
+
 ## Status
 
 - Geometry is built from caliper measurements of a stock bracket (see the
@@ -29,8 +32,10 @@ up nine stock brackets and a set of uprights from the second kit.
 
 The shared uprights carry both columns, roughly double the stock load on those
 two tubes. Reviews of this rack report tubes buckling and the tower tipping at
-nine loaded tiers. Anchor the rack to a wall (use the anchor variant on the top
-tier or two) and keep heavy spools low.
+nine loaded tiers. Anchor the rack to a wall and keep heavy spools low. The
+[anti-tip wall plate](../anti-tip-wall-plate/) tethers a rear upright to the
+wall with a zip tie; the anchor variant here is the alternative when the rack
+sits flush against the wall.
 
 ## Files
 

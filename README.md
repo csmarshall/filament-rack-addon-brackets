@@ -5,6 +5,10 @@ storage rack sold on Amazon as the
 [Hizypaixin 9-Tier 3D Printer Filament Storage Rack](https://www.amazon.com/dp/B0FFZ8SSQX)
 (ASIN B0FFZ8SSQX).
 
+> **Use at your own risk.** These are untested hobby designs shared for
+> educational purposes, with no warranty and no load rating. Read the
+> [disclaimer](DISCLAIMER.md) before printing or installing anything.
+
 ## Does your rack match?
 
 Racks like this are sold under several brand names. These parts are modelled on
@@ -29,6 +33,7 @@ regenerate.
 | Part | What it does | Status |
 |---|---|---|
 | [Shared-wall bracket](shared-wall-bracket/) | Joins two racks into one double-wide unit with a shared centre wall. | Modelled from measurements; socket fit not yet test-printed. |
+| [Anti-tip wall plate](anti-tip-wall-plate/) | Wall plate with a saddle for a zip-tie tether to a rack upright. | Modelled; not printed or load tested. |
 
 [View the shared-wall bracket in 3D](shared-wall-bracket/README.md#interactive-3d-view), or open any `.stl` under `shared-wall-bracket/models/` for GitHub's built-in viewer.
 
@@ -37,6 +42,7 @@ regenerate.
 | Path | Contents |
 |---|---|
 | `shared-wall-bracket/` | Source, STL/STEP/3MF models and notes for the shared-wall bracket. |
+| `anti-tip-wall-plate/` | Source and STL/STEP models for the anti-tip wall plate. |
 | `tools/make_u1_project.py` | Packages an STL as a Snapmaker Orca project for the Snapmaker U1. |
 | `docs/claude-code-handoff.md` | Project brief with the bracket source inline. |
 
@@ -49,4 +55,4 @@ pip install -r requirements.txt
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE) and the [disclaimer](DISCLAIMER.md).

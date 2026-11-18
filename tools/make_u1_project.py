@@ -38,6 +38,12 @@ PROCESS_OVERRIDES = {
     "sparse_infill_density": "15%",
 }
 
+# The same wall count again as a per-object setting, so it shows on the part
+# itself and survives switching to a different process preset.
+OBJECT_OVERRIDES = {
+    "wall_loops": PROCESS_OVERRIDES["wall_loops"],
+}
+
 # Keys that describe a preset file rather than a setting.
 META_KEYS = {"type", "name", "inherits", "from", "setting_id", "instantiation", "filament_id",
              "description", "renamed_from", "version", "url", "is_custom_defined",
@@ -149,11 +155,32 @@ def model_xml(mesh: trimesh.Trimesh, name: str, transform: str) -> str:
 '''
 
 
+def model_settings_xml(name: str) -> str:
+    """Per-object settings, in the layout Snapmaker Orca writes (Metadata/model_settings.config).
+
+    The object id and the part id both refer to object 1 in 3dmodel.model: a
+    plain mesh object is its own single part."""
+    settings = "\n".join(f'    <metadata key="{k}" value="{escape(v)}"/>' for k, v in OBJECT_OVERRIDES.items())
+    return f'''<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <object id="1">
+    <metadata key="name" value="{escape(name)}"/>
+    <metadata key="extruder" value="1"/>
+{settings}
+    <part id="1" subtype="normal_part">
+      <metadata key="name" value="{escape(name)}"/>
+      <metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    </part>
+  </object>
+</config>
+'''
+
+
 CONTENT_TYPES = '''<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
- <Default Extension="config" ContentType="application/json"/>
+ <Default Extension="config" ContentType="application/octet-stream"/>
 </Types>
 '''
 RELS = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -208,6 +235,7 @@ def main() -> None:
         z.writestr("_rels/.rels", RELS)
         z.writestr("3D/3dmodel.model", model_xml(mesh, name, transform))
         z.writestr("Metadata/project_settings.config", json.dumps(cfg, indent=4))
+        z.writestr("Metadata/model_settings.config", model_settings_xml(name))
     log.info("wrote %s (%d bytes, %d settings, %d triangles)", args.out, args.out.stat().st_size, len(cfg), len(mesh.faces))
 
 
