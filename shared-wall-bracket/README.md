@@ -87,12 +87,16 @@ To rebuild a U1 project you also need the `Snapmaker` folder from
 python3 ../tools/make_u1_project.py \
   --stl out_v2/shared_wall_bracket_v2.stl \
   --profiles /path/to/snapmaker-profiles/Snapmaker \
-  --out models/shared_wall_bracket_v2_U1_ABS.3mf
+  --out models/shared_wall_bracket_v2_U1_ABS.3mf \
+  --brim-width 10
 ```
 
 The project selects the stock `Snapmaker U1 (0.4 nozzle)` printer, the
-`0.20mm Standard` process and `Generic ABS @U1 0.4 nozzle` in slot 1, and
-overrides only wall loops, wall generator and infill density.
+`0.20mm Standard` process and `Generic ABS @U1 0.4 nozzle` in slot 1. It
+overrides wall loops (5), wall generator (Arachne), infill density (15%) and
+adds an outer brim: 10 mm on the bracket, 5 mm on the anchor variant, which is
+what fits inside the bed margin (`--brim-width`). The wall and brim settings
+are written both to the process and to the part itself.
 
 ## Interactive 3D view
 

@@ -31,18 +31,21 @@ PROCESS = "0.20mm Standard @Snapmaker U1 (0.4 nozzle)"
 FILAMENT_SLOT_1 = "Generic ABS @U1 0.4 nozzle"
 FILAMENT_OTHER_SLOTS = "Generic PLA @U1 0.4 nozzle"   # the U1 system default
 
-# Process overrides: every socket wall prints as solid perimeters.
+# Process overrides.  Walls: 5 loops with Arachne, so every socket wall (1.85,
+# 2.85 and 3.85 mm) prints as solid perimeters at the stock 0.42 / 0.45 mm
+# line widths.  Brim: an outer brim to hold a long ABS part down; its width is
+# set per file from --brim-width because it has to fit inside the bed margin.
 PROCESS_OVERRIDES = {
     "wall_loops": "5",
     "wall_generator": "arachne",
     "sparse_infill_density": "15%",
+    "brim_type": "outer_only",
+    "brim_width": "5",
 }
 
-# The same wall count again as a per-object setting, so it shows on the part
-# itself and survives switching to a different process preset.
-OBJECT_OVERRIDES = {
-    "wall_loops": PROCESS_OVERRIDES["wall_loops"],
-}
+# The wall and brim settings again as per-object settings, so they show on the
+# part itself and survive switching to a different process preset.
+OBJECT_KEYS = ("wall_loops", "wall_generator", "brim_type", "brim_width")
 
 # Keys that describe a preset file rather than a setting.
 META_KEYS = {"type", "name", "inherits", "from", "setting_id", "instantiation", "filament_id",
@@ -65,21 +68,21 @@ def resolve(profile_dir: Path, kind: str, name: str) -> dict:
     return merged
 
 
-def build_project_settings(profile_dir: Path, slots: int) -> dict:
+def build_project_settings(profile_dir: Path, slots: int, overrides: dict) -> dict:
     printer = resolve(profile_dir, "machine", PRINTER)
     process = resolve(profile_dir, "process", PROCESS)
     filament_names = [FILAMENT_SLOT_1] + [FILAMENT_OTHER_SLOTS] * (slots - 1)
     filaments = [resolve(profile_dir, "filament", n) for n in filament_names]
 
-    for key in PROCESS_OVERRIDES:
-        if key not in process:
-            raise KeyError(f"process preset has no '{key}' setting; override would be ignored")
-        log.info("override %s: %s -> %s", key, process[key], PROCESS_OVERRIDES[key])
+    for key, value in overrides.items():
+        # A key missing from the preset files just means the preset uses the
+        # slicer's built-in default for it.
+        log.info("override %s: %s -> %s", key, process.get(key, "(slicer default)"), value)
 
     cfg = {}
     cfg.update({k: v for k, v in printer.items() if k not in META_KEYS})
     cfg.update({k: v for k, v in process.items() if k not in META_KEYS})
-    cfg.update(PROCESS_OVERRIDES)
+    cfg.update(overrides)
 
     # Filament settings are stored one value per slot.
     filament_keys = sorted(set().union(*[set(f) for f in filaments]) - META_KEYS)
@@ -103,7 +106,7 @@ def build_project_settings(profile_dir: Path, slots: int) -> dict:
         "filament_settings_id": filament_names,
         "filament_colour": ["#3A3A3A"] + ["#FFFFFF"] * (slots - 1),
         # One entry for the process, one per filament slot, one for the printer.
-        "different_settings_to_system": [";".join(PROCESS_OVERRIDES)] + [""] * (slots + 1),
+        "different_settings_to_system": [";".join(overrides)] + [""] * (slots + 1),
         "inherits_group": [""] * (slots + 2),
     })
     return cfg, printer
@@ -155,12 +158,12 @@ def model_xml(mesh: trimesh.Trimesh, name: str, transform: str) -> str:
 '''
 
 
-def model_settings_xml(name: str) -> str:
+def model_settings_xml(name: str, overrides: dict) -> str:
     """Per-object settings, in the layout Snapmaker Orca writes (Metadata/model_settings.config).
 
     The object id and the part id both refer to object 1 in 3dmodel.model: a
     plain mesh object is its own single part."""
-    settings = "\n".join(f'    <metadata key="{k}" value="{escape(v)}"/>' for k, v in OBJECT_OVERRIDES.items())
+    settings = "\n".join(f'    <metadata key="{k}" value="{escape(overrides[k])}"/>' for k in OBJECT_KEYS)
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <config>
   <object id="1">
@@ -197,11 +200,19 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--name", default=None)
     ap.add_argument("--slots", type=int, default=4)
+    ap.add_argument("--brim-width", type=float, default=float(PROCESS_OVERRIDES["brim_width"]),
+                    help="outer brim width in mm; 0 disables the brim")
     ap.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     args = ap.parse_args()
     logging.basicConfig(level=args.log_level, format=LOG_FORMAT)
 
-    cfg, printer = build_project_settings(args.profiles, args.slots)
+    overrides = dict(PROCESS_OVERRIDES)
+    if args.brim_width > 0:
+        overrides["brim_width"] = f"{args.brim_width:g}"
+    else:
+        overrides["brim_type"] = "no_brim"
+        overrides["brim_width"] = "0"
+    cfg, printer = build_project_settings(args.profiles, args.slots, overrides)
     lo, hi = bed_rectangle(printer)
     bed_size = hi - lo
     log.info("U1 printable area %.1f x %.1f mm, height %s", bed_size[0], bed_size[1], printer.get("printable_height"))
@@ -220,6 +231,10 @@ def main() -> None:
              deg, ext[0], ext[1], margin)
     if margin < 2.0:
         raise SystemExit(f"part does not fit the bed with at least 2 mm clearance (margin {margin:.1f} mm)")
+    if args.brim_width > 0 and margin - args.brim_width < 2.0:
+        raise SystemExit(f"a {args.brim_width:g} mm brim leaves {margin - args.brim_width:.1f} mm to the bed edge; "
+                         f"use --brim-width {max(0.0, margin - 2.0):.0f} or less")
+    log.info("brim %g mm leaves %.1f mm to the nearest bed edge", args.brim_width, margin - args.brim_width)
     if mesh.extents[2] > float(printer["printable_height"]):
         raise SystemExit("part is taller than the printable height")
 
@@ -235,7 +250,7 @@ def main() -> None:
         z.writestr("_rels/.rels", RELS)
         z.writestr("3D/3dmodel.model", model_xml(mesh, name, transform))
         z.writestr("Metadata/project_settings.config", json.dumps(cfg, indent=4))
-        z.writestr("Metadata/model_settings.config", model_settings_xml(name))
+        z.writestr("Metadata/model_settings.config", model_settings_xml(name, overrides))
     log.info("wrote %s (%d bytes, %d settings, %d triangles)", args.out, args.out.stat().st_size, len(cfg), len(mesh.faces))
 
 
