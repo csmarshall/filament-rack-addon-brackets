@@ -38,7 +38,7 @@ def anchor_plan(sheet, p: Params, solid: cq.Solid, left: float, mid_y: float, sc
     view.dim_v(-p.tie_slot_width / 2, p.tie_slot_width / 2, top, 6)
     view.dim_v(-ox, ox, top, 15)
     view.dim_v(-half, half, y0, -6)
-    view.caption(title, "anchor", below=8)
+    view.caption(title, "plan section", below=8)
     return view
 
 
