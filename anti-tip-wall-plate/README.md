@@ -3,7 +3,7 @@
 A small plate that screws to the wall, with a raised saddle for a zip tie. It
 follows the layout of the common two-plate furniture anti-tip kit. On the rack
 side the tie goes through the saddle on the
-[shared-wall bracket's anchor variant](../shared-wall-bracket/#anchor-variant),
+[shared-wall bracket anchor variants](../shared-wall-bracket/#anchor-variants),
 or straight around a steel upright.
 
 ![Preview](preview.png)
