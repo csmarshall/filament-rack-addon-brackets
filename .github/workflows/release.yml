@@ -1,14 +1,25 @@
-# Cut a release on every push to main.
+# Cut a release.
 #
-# The major and minor version are set by hand in the VERSION file (for example
-# "1.0").  The patch number is automatic: one higher than the newest existing
-# tag for that major.minor, starting at 0.  To cut 1.1.0 or 2.0.0, edit VERSION
-# and push.  Put "[skip release]" in a commit message to push without a release.
+# Every push to main cuts a patch release: one higher than the newest vX.Y.Z
+# tag.  Major and minor bumps are a deliberate manual choice: run this workflow
+# by hand (Actions > Release > Run workflow) and pick "minor" or "major".
+# Put "[skip release]" in a commit message to push without a release.
+#
+# This local workflow is a stand-in for the shared release workflow in
+# common-blueprint-generator.  When that lands, replace this file with a call
+# to it; the two must not both run, or every push would cut two releases.
 name: Release
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to raise
+        required: true
+        type: choice
+        options: [minor, major]
 
 permissions:
   contents: write
@@ -19,7 +30,7 @@ concurrency:
 
 jobs:
   release:
-    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,18 +39,25 @@ jobs:
 
       - name: Work out the version
         id: version
+        env:
+          BUMP: ${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'patch' }}
         run: |
           set -euo pipefail
-          base="$(tr -d '[:space:]' < VERSION)"
-          if ! [[ "$base" =~ ^[0-9]+\.[0-9]+$ ]]; then
-            echo "VERSION must be MAJOR.MINOR, got '$base'" >&2
-            exit 1
-          fi
           git fetch --tags --quiet
-          last="$(git tag --list "v${base}.*" | sed "s/^v${base}\.//" | grep -E '^[0-9]+$' | sort -n | tail -1 || true)"
-          if [ -z "$last" ]; then patch=0; else patch=$((last + 1)); fi
-          echo "version=${base}.${patch}" >> "$GITHUB_OUTPUT"
-          echo "Releasing v${base}.${patch} (previous patch: ${last:-none})"
+          last="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)"
+          if [ -z "$last" ]; then
+            next="1.0.0"
+          else
+            IFS=. read -r major minor patch <<< "${last#v}"
+            case "$BUMP" in
+              major) next="$((major + 1)).0.0" ;;
+              minor) next="${major}.$((minor + 1)).0" ;;
+              patch) next="${major}.${minor}.$((patch + 1))" ;;
+              *) echo "unknown bump '$BUMP'" >&2; exit 1 ;;
+            esac
+          fi
+          echo "version=${next}" >> "$GITHUB_OUTPUT"
+          echo "Releasing v${next} (${BUMP} bump; previous: ${last:-none})"
 
       - name: Build the archives
         run: python3 tools/make_release.py --version "${{ steps.version.outputs.version }}" --out dist

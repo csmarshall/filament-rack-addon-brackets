@@ -2,10 +2,10 @@
 """
 Build the two release archives from the files committed in this repository.
 
-    <name>-v<version>-print-files.zip   STL and 3MF for every part, the print
-                                        settings, the disclaimer and the licences
-    <name>-v<version>-source.zip        every tracked file: scripts, CAD exports,
-                                        drawings and documentation
+    <name>-prints-v<version>.zip    for every part: STL and 3MF print files, STEP,
+                                    the drawing and the README, plus the print
+                                    settings, the disclaimer and the licences
+    <name>-source-v<version>.zip    every tracked file
 
 Nothing is regenerated: the archives hold exactly what is committed, so a
 release always matches its tag.
@@ -25,9 +25,11 @@ log = logging.getLogger("release")
 
 REPO = Path(__file__).resolve().parent.parent
 NAME = "filament-rack-addon-brackets"
-PRINT_SUFFIXES = {".stl", ".3mf"}
-# Shipped alongside the print files so the archive stands on its own.
-PRINT_EXTRAS = ["PRINT_SETTINGS.md", "DISCLAIMER.md", "LICENSE.md", "LICENSE-DESIGNS.md"]
+PRINT_SUFFIXES = {".stl", ".3mf", ".step"}
+# Drawings and READMEs travel with the print files.
+PRINT_NAMES = {"README.md", "blueprint.svg", "blueprint.png"}
+# Shipped alongside so the archive stands on its own.
+PRINT_EXTRAS = ["PRINT_SETTINGS.md", "DISCLAIMER.md", "LICENSE.md", "LICENSE-DESIGNS.md", "LICENSE-CODE"]
 
 
 def tracked_files() -> list:
@@ -61,16 +63,17 @@ def main() -> None:
         log.error("print archive needs these tracked files: %s", ", ".join(missing))
         raise SystemExit(1)
 
-    print_files = [f for f in files if f.suffix.lower() in PRINT_SUFFIXES and "legacy" not in f.parts]
-    if not print_files:
+    print_files = [f for f in files
+                   if (f.suffix.lower() in PRINT_SUFFIXES or f.name in PRINT_NAMES) and "legacy" not in f.parts]
+    if not any(f.suffix.lower() in {".stl", ".3mf"} for f in print_files):
         log.error("no STL or 3MF files are tracked")
         raise SystemExit(1)
-    print_files += [Path(f) for f in PRINT_EXTRAS]
+    print_files += [Path(f) for f in PRINT_EXTRAS if Path(f) not in print_files]
 
     args.out.mkdir(parents=True, exist_ok=True)
-    stem = f"{NAME}-v{args.version}"
-    write_zip(args.out / f"{stem}-print-files.zip", print_files, f"{stem}-print-files")
-    write_zip(args.out / f"{stem}-source.zip", files, f"{stem}-source")
+    for kind, members in (("prints", print_files), ("source", files)):
+        stem = f"{NAME}-{kind}-v{args.version}"
+        write_zip(args.out / f"{stem}.zip", members, stem)
 
 
 if __name__ == "__main__":

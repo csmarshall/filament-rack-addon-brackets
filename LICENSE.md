@@ -6,32 +6,55 @@ This repository is under two licences. Which one applies depends on the file.
 
 | What | Files | Licence |
 |---|---|---|
-| **The designs** | Each part's folder (`shared-wall-bracket/`, `anti-tip-wall-plate/`): the CAD source that defines the part, the STL, STEP and 3MF models, drawings and diagrams. Also `docs/` and every README. | [CC BY-NC-SA 4.0](LICENSE-DESIGNS.md) |
-| **General-purpose tooling** | `tools/` and `.github/` | [MIT](LICENSE-CODE) |
+| **Models, print files and drawings** | STL, STEP and 3MF files; drawings, diagrams and other images; the READMEs and other documentation | [CC BY-NC-SA 4.0](LICENSE-DESIGNS.md): **not for resale** |
+| **Scripts and code** | Every `.py` script, and the workflows under `.github/` | [MIT](LICENSE-CODE) |
 
 ## What that means in practice
 
 **You may**, free of charge:
 
 - print the parts for yourself, your household, your workplace or a makerspace;
-- change the designs and share your versions, as long as you credit the
+- change the models and share your versions, as long as you credit the
   original and share under the same licence;
-- use the tooling in `tools/` for anything, including commercial work.
+- use, change and redistribute the scripts under the MIT licence.
 
 **You may not**, without written permission:
 
-- sell these files, or prints made from them, or remixes of them. That
-  includes listing them on Etsy, eBay, Amazon or any print-on-demand service,
-  whether or not you credit the source.
+- sell these models, print files or drawings, or prints made from them, or
+  remixes of them. That includes listing them on Etsy, eBay, Amazon or any
+  print-on-demand service, whether or not you credit the source.
 
 If you would like to sell prints, open an issue on this repository to ask.
 
-## Why the part scripts are not MIT
+## Why these licences
 
-`shared_wall_bracket.py` and `wall_plate.py` are the designs, written as code:
-running them produces the models. They are therefore licensed with the designs
-(CC BY-NC-SA 4.0), not with the tooling. Models generated from them, with any
-parameters, are covered by the same licence.
+**The goal is that anyone can print these parts and improve on them, and that
+nobody sells them as their own.**
+
+- **Models, print files and drawings are CC BY-NC-SA 4.0** because it says
+  exactly that. *Attribution* means the work stays credited. *NonCommercial*
+  means it cannot be listed for sale without asking first. *ShareAlike* means
+  an improved version stays open on the same terms, so improvements come back
+  to everyone and cannot be closed off.
+- **Scripts and code are MIT** because code is most useful when it can be
+  reused anywhere. The 3MF packager, the release tooling and the modelling
+  scripts may help someone with a completely different part, and MIT lets them
+  take what they need with no questions.
+- **Not MIT for everything,** which is where this repository started: MIT
+  explicitly allows selling copies. That is right for code and wrong for a
+  finished part someone could simply print and list.
+- **Not a fully closed licence,** because these are add-ons for a cheap rack
+  that many people own, and they are more useful shared than guarded.
+
+Selling prints is not ruled out. It just starts with a conversation: open an
+issue.
+
+### What the licences do not do
+
+They are not a guarantee. Copyright protects a functional shape less strongly
+than it protects artwork, and the scripts being MIT means someone can lawfully
+run them. The licences make the intent clear and give a basis for asking a
+marketplace to take a listing down; they do not make copying impossible.
 
 ## No warranty
 
