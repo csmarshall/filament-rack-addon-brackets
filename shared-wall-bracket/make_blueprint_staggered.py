@@ -56,9 +56,8 @@ def draw(out_stem: Path) -> None:
 
     # Anchor detail: the same bracket with the rear collar and tie slot.
     asolid = build_bracket(anchored).val()
-    ox, top_y = sp.anchor_extent(anchored)
     z = anchored.saddle_height / 2
-    sp.cut_line(sheet, right, (L - anchored.leg_length + 7, z), (top_y + 3, z), "B")
+    sp.cut_line(sheet, right, (L - anchored.leg_length + 7, z), (L + 1, z), "B")
     sp.anchor_plan(sheet, anchored, asolid, x_det - 4, 131.0, DETAIL, "DETAIL B: ANCHOR")
     sp.anchor_rear(sheet, anchored, asolid, (x_det + 78, 107.0), 1.0, "VIEW C")
 

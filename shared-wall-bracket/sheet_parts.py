@@ -38,7 +38,7 @@ def anchor_plan(sheet, p: Params, solid: cq.Solid, left: float, mid_y: float, sc
     view.dim_v(-p.tie_slot_width / 2, p.tie_slot_width / 2, top, 6)
     view.dim_v(-ox, ox, top, 15)
     view.dim_v(-half, half, y0, -6)
-    view.caption(title, f"at {fmt(z)} above the flat edge", below=ox * scale + 8)
+    view.caption(title, "anchor", below=8)
     return view
 
 
@@ -54,12 +54,13 @@ def anchor_rear(sheet, p: Params, solid: cq.Solid, centre: tuple[float, float], 
     return view
 
 
-def anchor_notes(p: Params) -> str:
+def anchor_notes(p: Params, plane: str = "B") -> str:
     """The anchor's note line, from the same parameters."""
     ox, _ = anchor_extent(p)
     wide = "collar around the rear leg" if ox > p.thickness / 2 else "saddle on the rear end"
     return (f"Anchor: {wide}, {fmt(p.saddle_height)} high, {fmt(p.saddle_leg)} legs, {fmt(p.saddle_bar)} bar behind a {fmt(p.tie_slot_width)} x "
-            f"{fmt(p.tie_slot_depth)} tie slot. Zip tie runs through the slot and round a tube or to the wall plate.")
+            f"{fmt(p.tie_slot_depth)} tie slot. Zip tie runs through the slot and round a tube or to the wall plate. "
+            f"Detail {plane} is cut {fmt(p.saddle_height / 2)} above the flat edge.")
 
 
 def face_view(sheet, p: Params, solid: cq.Solid, left: float, base: float, face: int, ys: list, scale: float, title: str, detail: str,
@@ -80,9 +81,10 @@ def face_view(sheet, p: Params, solid: cq.Solid, left: float, base: float, face:
     view.dim_h(pts[0], pts[-1], 0, -17)
     x0, y0, x1, y1 = view.box()
     if full:
+        clear = (anchor_extent(p)[1] - L) * scale if p.anchor else 0.0   # keep the dimensions clear of an anchor behind the rear end
         view.dim_h(f(0), f(G), H, 7)
-        view.dim_v(0, H, f(L), 9 * face)
-        view.dim_v(0, R, f(L), 17 * face)
+        view.dim_v(0, H, f(L), (9 + clear) * face)
+        view.dim_v(0, R, f(L), (17 + clear) * face)
         view.leader((f(G + p.corner_radius * 0.29), R + p.corner_radius * 0.29), (x0 + 14, y1 + 14), f"R{fmt(p.corner_radius)}")
     if ys:
         y = ys[min(1, len(ys) - 1)]

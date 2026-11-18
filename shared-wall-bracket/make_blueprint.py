@@ -11,33 +11,34 @@ Usage:
     python3 make_blueprint.py                 # writes blueprint.svg and refreshes the README embed
     python3 make_blueprint.py --log-level DEBUG
 """
-import argparse
+import dataclasses
 import logging
 import math
-from datetime import date
+import sys
 from pathlib import Path
 
 import cadquery as cq
 import numpy as np
 
-from blueprint import Sheet, TitleInfo, View, fmt, git_dates, project, revisions, section_loops
-from blueprint.readme import embed, update
-from blueprint.reuse_lookup import licence_for
-from shared_wall_bracket import Params, build_bracket
+from blueprint import Sheet, View, fmt, project, section_loops
 
-LOG_FORMAT = "%(asctime)s %(levelname)-5s %(name)s: %(message)s"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+import blueprint_helpers as bh  # noqa: E402
+import sheet_parts as sp  # noqa: E402
+from shared_wall_bracket import Params, build_bracket  # noqa: E402
+
 log = logging.getLogger("blueprint")
 
 SCALE = 0.75   # sheet mm per model mm for the main views
 DETAIL = 1.5   # sheet mm per model mm for the section
 ISO = 0.36     # the isometric is not to scale
+ANCHOR_SCALE = 1.0   # sheet mm per model mm for the anchor detail
+ANCHOR_AT = (272.0, 221.0)   # sheet position of the anchor detail: its left edge, and the bracket centre line
 DEFAULT_OUT = Path(__file__).with_name("blueprint")  # the README embed is only refreshed for this output
 
 
 def draw(p: Params, out_stem: Path) -> None:
-    dates = git_dates(Path(__file__).resolve().parent)  # before anything is written, so this run's own output does not read as a local edit
-    # The drawing's own licence and copyright, from REUSE.toml for the SVG this run writes (not the script's): fails if REUSE.toml does not cover it.
-    licence = licence_for(out_stem.with_name(f"{out_stem.name}.svg"))
+    ctx = bh.Context(Path(__file__), out_stem)  # git dates and the drawing's licence, read before anything is written
     solid = build_bracket(p).val()
     shape = solid.wrapped
     L, H, T, R, G = p.length, p.height, p.thickness, p.rail_height, p.leg_length
@@ -121,41 +122,28 @@ def draw(p: Params, out_stem: Path) -> None:
     iso = View.at_corner(sheet, iso_proj, (end_x + 2, 92.0), ISO).draw(hidden=False, centre_marks=False)
     iso.caption("ISOMETRIC", "not to scale", below=6)
 
-    rendered = date.today()
-    sheet.title_block(TitleInfo(
-        title="SHARED-WALL BRACKET", drawing_number="FRB-001", for_="9-tier modular filament storage rack (Amazon B0FFZ8SSQX)",
-        material="ABS or PETG. Not PLA.", source="shared-wall-bracket/shared_wall_bracket.py", drawn_by="C. MARSHALL", company="Shermer Works",
-        started=dates.started, updated=rendered, revisions=revisions(dates, rendered), licence=licence.licence, copyright=licence.copyright,
-    ), SCALE, detail_scales=(DETAIL,))
-    sheet.notes([
-        f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
-        f"Bar sockets: {per_face} on each long face, centred {fmt(p.bar_z)} above the flat edge, {fmt(p.web)} web between opposite pairs"
-        + (f" with a {fmt(p.bar_vent_d)} dia vent through it." if has_vent else "."),
-        f"Upright sockets: one from each end of each leg, on the centre line, {fmt(p.divider)} divider between, "
-        f"{fmt(p.upright_vent_d)} dia hole through the divider.",
-        "Print flat edge down, no supports. 5 wall loops (Arachne), 15% gyroid infill.",
-        "Untested hobby design. No load rating. See DISCLAIMER.md.",
-    ])
-    (svg,) = sheet.save(out_stem, formats=("svg",))
-    if out_stem == DEFAULT_OUT:
-        # Keep the drawing and its credit line current in this folder's README, between <!-- blueprint:blueprint --> and <!-- /blueprint -->.
-        readme = Path(__file__).with_name("README.md")
-        update(readme, "blueprint", embed(readme, svg, "Blueprint of the shared-wall bracket", Path(__file__).with_name("shared_wall_bracket.py")))
+    # --- Anchor detail: the same bracket with the saddle on its rear end, in the free corner between the top view and the section. ---
+    anchored = dataclasses.replace(p, anchor=True)
+    asolid = build_bracket(anchored).val()
+    sp.cut_line(sheet, front, (L - G + 7, p.saddle_height / 2), (L + 1, p.saddle_height / 2), "B")
+    sp.anchor_plan(sheet, anchored, asolid, ANCHOR_AT[0], ANCHOR_AT[1], ANCHOR_SCALE, "DETAIL B")
 
-
-def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output path without extension (the README embed is refreshed only for the default)")
-    ap.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
-    args = ap.parse_args()
-    logging.basicConfig(level=args.log_level, format=LOG_FORMAT)
-    logging.getLogger("shared_wall_v2").setLevel(logging.WARNING)
-    try:
-        draw(Params(), args.out)
-    except Exception:
-        log.exception("Blueprint generation failed")
-        raise SystemExit(1)
+    bh.finish(
+        sheet, ctx, out_stem, DEFAULT_OUT, title="SHARED-WALL BRACKET", number="FRB-001", source="shared-wall-bracket/shared_wall_bracket.py",
+        for_=bh.FOR_RACK, material="ABS or PETG. Not PLA.", scale=SCALE, detail_scales=(DETAIL, ANCHOR_SCALE) if ANCHOR_SCALE != DETAIL else (DETAIL,),
+        notes=[
+            f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
+            f"Bar sockets: {per_face} on each long face, centred {fmt(p.bar_z)} above the flat edge, {fmt(p.web)} web between opposite pairs"
+            + (f" with a {fmt(p.bar_vent_d)} dia vent through it." if has_vent else "."),
+            f"Upright sockets: one from each end of each leg, on the centre line, {fmt(p.divider)} divider between, "
+            f"{fmt(p.upright_vent_d)} dia hole through the divider.",
+            "Print flat edge down, no supports. 5 wall loops (Arachne), 15% gyroid infill.",
+            "Untested hobby design. No load rating. See DISCLAIMER.md.",
+            sp.anchor_notes(anchored),
+        ],
+        readme=Path(__file__).with_name("README.md"), alt="Blueprint of the shared-wall bracket", source_file=Path(__file__).with_name("shared_wall_bracket.py"),
+    )
 
 
 if __name__ == "__main__":
-    main()
+    bh.run(__doc__, lambda out: draw(Params(), out), DEFAULT_OUT, quiet=("shared_wall_v2",))
