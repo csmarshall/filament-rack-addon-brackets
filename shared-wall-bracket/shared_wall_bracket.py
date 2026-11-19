@@ -131,10 +131,18 @@ class Params:
     # Zip-tie slits: two obround slots through the rail, face to face, centred
     # tie_slit_from_end from each end at half the rail height.  The size comes
     # from the strength rule in check_tie_slit_strength.  0 height disables them.
+    # How far in the slits go is set by the first bar socket they must clear:
+    # slit centre >= socket centre + bore/2 + chamfer (the socket's mouth edge)
+    # + tie_slit_socket_wall + half the slit's width at the face.  For the first
+    # socket at 26 that is 26 + 6.15 + 0.8 + 3 + 2.4 = 38.35, so 40 mm for the
+    # in-line and end brackets.  The staggered bracket has a second face's socket
+    # at 42 (limit 54.35 mm) and keeps 60 (set in Params.staggered).  validate()
+    # enforces the rule on whatever value is used.
     tie_slit_height: float = 9.0     # along Z; the slit is rounded top and bottom
     tie_slit_width: float = 3.2      # along Y; clears a 1.9 mm thick tie, and is the end-round diameter
     tie_slit_lead_in: float = 0.8    # 45 degree lead-in on both faces, as on the sockets
-    tie_slit_from_end: float = 60.0  # slit centre from each end
+    tie_slit_from_end: float = 40.0  # slit centre from each end (60 on the staggered bracket)
+    tie_slit_socket_wall: float = 3.0   # solid plastic between a slit's mouth and a bar socket's mouth
     tie_slit_min_wall: float = 3.0   # solid rail kept above and below the slit's mouth
 
     def __post_init__(self) -> None:
@@ -247,6 +255,7 @@ class Params:
             "rail_height": rail_height,
             "corner_radius": min(base.corner_radius, base.height - rail_height),
             "plan_round": thickness / 2,
+            "tie_slit_from_end": kwargs.get("tie_slit_from_end", 60.0),   # the second face's first socket (centre 42) pushes the slits in
         }
         return cls(**{**kwargs, **values})
 
@@ -309,8 +318,10 @@ class Params:
                 for sign, ys in ((-1, self.bar_y_left), (1, self.bar_y_right)):
                     if sign in self.bar_faces:
                         for sy in ys:
-                            if abs(y - sy) < self.bore / 2 + mouth_w / 2 + 1.5:
-                                raise ValueError(f"tie slit at y={y} runs into the bar socket at y={sy}")
+                            need = self.bore / 2 + self.chamfer + self.tie_slit_socket_wall + mouth_w / 2
+                            if abs(y - sy) < need:
+                                raise ValueError(f"tie slit at y={y} is {abs(y - sy):.2f} mm from the bar socket at y={sy}; need >= {need:.2f} mm "
+                                                 f"(socket mouth, {self.tie_slit_socket_wall:g} mm of wall, then the slit's mouth)")
         # Bar sockets and upright sockets must not meet anywhere along the length.
         up_lo = self.upright_from_end - self.bore / 2
         up_hi = self.upright_from_end + self.bore / 2
