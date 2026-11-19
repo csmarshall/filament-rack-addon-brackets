@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Draw the blueprint of the end bracket, left and right, on the shared house sheet of common-blueprint-generator
+Draw the blueprint of the end bracket on the shared house sheet of common-blueprint-generator
 (https://github.com/csmarshall/common-blueprint-generator), which the Blueprint workflow installs.
 
-The left bracket (Params.end("left")) is drawn. The right bracket is its mirror image, so it is described, with its socket face read
-from the same Params, not drawn. Every view is a hidden-line projection of the CAD model, and every number is read from the Params object the
+One part serves both ends of a row, turned end for end as needed, so there is one drawing. Every view is a hidden-line projection of the CAD model, and every number is read from the Params object the
 model is built from.
 
 Usage:
@@ -33,17 +32,16 @@ DEFAULT_OUT = Path(__file__).with_name("blueprint_end")
 
 def draw(out_stem: Path) -> None:
     ctx = bh.Context(Path(__file__), out_stem)
-    p = Params.end("left")
-    mirror = Params.end("right")
+    p = Params.end()
     solid = build_bracket(p).val()
     L, H, T = p.length, p.height, p.thickness
-    face = p.bar_faces[0]                                  # the one face with sockets (+X for the left bracket)
+    face = p.bar_faces[0]                                  # the one face with sockets (+X)
     ys = p.bar_y_right if face > 0 else p.bar_y_left
     log.info("projecting views of a %.0f x %.0f x %.0f mm part", T, L, H)
     sheet = Sheet("B")
     x_left = 34.0
 
-    front = sp.face_view(sheet, p, solid, x_left, 200.0, face, ys, SCALE, "FRONT (+X face)", "socket face, left bracket", full=True)
+    front = sp.face_view(sheet, p, solid, x_left, 200.0, face, ys, SCALE, "FRONT (+X face)", "socket face", full=True)
     top = View.at_corner(sheet, project(solid.wrapped, (0, 0, 1), (-1, 0, 0)), (x_left, 120.0), SCALE).draw()
     top.caption("TOP", "leg ends; slits hidden", below=TOP_LABEL_DROP)
     top.dim_v(-T / 2, T / 2, 0, -9)
@@ -58,19 +56,20 @@ def draw(out_stem: Path) -> None:
     sp.slit_detail(sheet, p, solid, (x_det + 4, 94.0), SLIT_DETAIL, "DETAIL B: TIE SLIT")
 
     side = "+X" if face > 0 else "-X"
-    other = "-X" if mirror.bar_faces[0] < 0 else "+X"
+    turned = sorted(L - y for y in ys)   # the sockets seen from the front end once the bracket is turned end for end
     sheet_notes = [
         f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
         f"Bar sockets: {len(ys)} on the {side} face only, centred {fmt(p.bar_z)} above the flat edge, {fmt(p.thickness - p.bar_depth)} of plastic behind each.",
-        f"The right bracket is the mirror image of the left, with its sockets on the {other} face. Left and right are named facing the rack. "
-        "They are not interchangeable.",
+        "One part serves both ends of a row, turned end for end as needed. Turned, its sockets sit at "
+        f"{', '.join(fmt(y) for y in turned)} from the front end instead of {', '.join(fmt(y) for y in ys)}: a 1 mm shift, "
+        "the same as a stock bracket turned around.",
         f"Upright sockets: one from each end of each leg, on the centre line, {fmt(p.divider)} divider between.",
         sp.slit_notes(p),
         "Print flat edge down, no supports. Untested hobby design. No load rating. See DISCLAIMER.md.",
     ]
-    bh.finish(sheet, ctx, out_stem, DEFAULT_OUT, title="END BRACKET LEFT / RIGHT", number="FRB-003", source="shared-wall-bracket/shared_wall_bracket.py",
+    bh.finish(sheet, ctx, out_stem, DEFAULT_OUT, title="END BRACKET", number="FRB-003", source="shared-wall-bracket/shared_wall_bracket.py",
               for_=bh.FOR_RACK, material="ABS or PETG. Not PLA.", scale=SCALE, detail_scales=(DETAIL, SLIT_DETAIL), notes=sheet_notes,
-              readme=Path(__file__).with_name("README.md"), alt="Blueprint of the end bracket, left and right",
+              readme=Path(__file__).with_name("README.md"), alt="Blueprint of the end bracket",
               source_file=Path(__file__).with_name("shared_wall_bracket.py"))
 
 

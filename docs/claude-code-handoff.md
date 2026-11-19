@@ -132,8 +132,8 @@ shifted 16 mm along the bracket so the two sets pass side by side; it uses less
 plastic, but the two columns stand 16 mm apart front to back.  The staggered bracket comes as a mirror-image pair, A
 and B, so a row can alternate them and zigzag instead of stepping back.
 
-End brackets (Params.end) are single-sided stand-ins for the stock bracket at
-either end of a row.
+The end bracket (Params.end) is a single-sided stand-in for the stock bracket at
+either end of a row; turned end for end it serves the other end.
 
 Usage:
     python3 shared_wall_bracket.py
@@ -199,8 +199,8 @@ class Params:
     # A and B along a row keeps it from stepping back at every wall.
     mirror: bool = False
     # Which faces carry bar sockets: -1 is the -X face, +1 the +X face.  A
-    # shared wall has both.  An end wall has one: facing the rack, the left end
-    # wall's sockets face right (+1) and the right end wall's face left (-1).
+    # shared wall has both.  An end wall has one, on +X; the same bracket turned
+    # end for end serves the other end of a row.
     bar_faces: tuple = (-1, 1)
     stock_length: float = 305.0      # length of the stock bracket the bar positions are measured on
     fit_clearance: float = 0.3       # added to socket DIAMETER; tune with the coupon
@@ -332,21 +332,19 @@ class Params:
         return cls(**{**kwargs, **values})
 
     @classmethod
-    def end(cls, side: str = "left", **kwargs) -> "Params":
+    def end(cls, **kwargs) -> "Params":
         """Parameters for an end-wall bracket: bar sockets on one face only.
 
         It is a printed stand-in for a stock bracket at either end of a row:
         the stock 18 mm width, 16 mm bar sockets with a 2 mm back wall, the
-        stock 18 mm rail and fully rounded ends.  `side` is which end of the
-        row it goes on, facing the rack: "left" puts the sockets on the face
-        toward the row (+X), "right" on the other.  The two are mirror images
-        and are not interchangeable."""
-        if side not in ("left", "right"):
-            raise ValueError("side must be 'left' or 'right'")
+        stock 18 mm rail and fully rounded ends.  The sockets are on the +X
+        face.  One part serves both ends of a row: turned end for end it is
+        the other end's bracket, with its sockets shifted 1 mm along the
+        length (the stock pattern is 26 mm from one end and 27 from the
+        other), as with a stock bracket turned around."""
         base = cls(**kwargs)
         thickness = base.bar_depth + 2.0
-        values = {"thickness": thickness, "plan_round": thickness / 2,
-                  "bar_faces": (1,) if side == "left" else (-1,)}
+        values = {"thickness": thickness, "plan_round": thickness / 2, "bar_faces": (1,)}
         return cls(**{**kwargs, **values})
 
     def validate(self) -> None:
@@ -714,8 +712,7 @@ def main() -> None:
         stag = {k: v for k, v in base.items() if k != "bar_depth"}
         for letter, mirror in (("a", False), ("b", True)):
             export(build_bracket(Params.staggered(**stag, mirror=mirror)), args.out, f"shared_wall_bracket_staggered_{letter}")
-        for side in ("left", "right"):
-            export(build_bracket(Params.end(side, **base)), args.out, f"end_bracket_{side}")
+        export(build_bracket(Params.end(**base)), args.out, "end_bracket")
     except ValueError as exc:
         log.error("Invalid parameters: %s", exc)
         raise SystemExit(2)
