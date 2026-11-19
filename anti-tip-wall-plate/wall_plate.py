@@ -4,8 +4,9 @@ Anti-tip wall plate for a zip-tie tether.
 
 Modelled on the common two-plate furniture anti-tip kit: a small plate screwed
 to the wall with a raised saddle, and a zip tie that runs through the saddle
-and around the furniture.  On the filament rack the tie goes straight around a
-steel upright tube, so only this wall plate needs printing.
+and around the furniture.  On the filament rack the tie goes through one of a
+bracket's tie slits (see ../shared-wall-bracket), or straight around a steel
+upright tube.
 
 The part is one 2D profile extruded along its width.  Print it standing on
 that profile (the profile on the bed, width pointing up).  The layers then run

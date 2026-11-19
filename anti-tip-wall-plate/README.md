@@ -2,9 +2,9 @@
 
 A small plate that screws to the wall, with a raised saddle for a zip tie. It
 follows the layout of the common two-plate furniture anti-tip kit. On the rack
-side the tie goes through the saddle on the
-[shared-wall bracket's anchor variant](../shared-wall-bracket/#anchor-variant),
-or straight around a steel upright.
+side the tie goes through one of the
+[shared-wall brackets' tie slits](../shared-wall-bracket/#tie-slits), or
+straight around a steel upright.
 
 ![Preview](preview.png)
 
@@ -14,8 +14,8 @@ or straight around a steel upright.
 
 ## Use
 
-- Fit it as high on the rack as you can: through the anchor variant's saddle on
-  the top tier, or around a rear upright just under the top bracket.
+- Fit it as high on the rack as you can: through a tie slit of a top-tier
+  bracket, or around a rear upright just under the top bracket.
 - Use a bought nylon zip tie, not a printed one. The slot is 9.5 x 3.2 mm, for
   ties up to 7.6 mm wide. A 250 mm tie is a reasonable length.
 - Two screw holes, 4.8 mm, for #8 or 4 mm pan-head screws. Fix into a stud
@@ -40,11 +40,25 @@ No supports. At this size, 4 wall loops print nearly solid.
 PLA slowly deforms under constant load and softens when warm. Use PETG, ABS or
 ASA.
 
+## Drawing
+
+<!-- blueprint:blueprint -->
+[![Blueprint of the anti-tip wall plate](blueprint.svg)](blueprint.svg)
+
+<sub>Drawing generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<!-- /blueprint -->
+
+Profile, plan, end and isometric views, projected from the CAD model with the
+dimensions read from the same parameters. The Publish workflow redraws it
+whenever the model changes.
+
 ## Files
 
 | Path | What it is |
 |---|---|
 | `wall_plate.py` | Parametric CadQuery source. |
+| `make_blueprint.py` | Draws `blueprint.svg`. |
+| `blueprint.svg` | Dimensioned drawing, generated on [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator). |
 | `models/anti_tip_wall_plate.stl` / `.step` | The plate: 60 x 22 mm, 14.2 mm tall. |
 
 ## Regenerating
@@ -52,4 +66,5 @@ ASA.
 ```sh
 python3 wall_plate.py                                   # writes models/
 python3 wall_plate.py --tie-width 4.8 --tie-thickness 1.4
+python3 make_blueprint.py                               # redraws blueprint.svg and the embed above
 ```

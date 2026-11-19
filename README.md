@@ -39,8 +39,8 @@ regenerate.
 
 | Part | What it does | Status |
 |---|---|---|
-| [Shared-wall bracket](shared-wall-bracket/) | Joins two or more racks into one unit with shared centre walls. Two layouts: in line (40 mm thick) and staggered (18 mm thick, the stock width). | Modelled from measurements; socket fit not yet test-printed. |
-| [Anti-tip wall plate](anti-tip-wall-plate/) | Wall plate with a saddle for a zip-tie tether to a rack upright. | Modelled; not printed or load tested. |
+| [Shared-wall bracket](shared-wall-bracket/) | Joins two or more racks into one unit with shared centre walls. Two layouts: in line (36 mm thick) and staggered (18 mm thick, the stock width). | Modelled from measurements; socket fit not yet test-printed. |
+| [Anti-tip wall plate](anti-tip-wall-plate/) | Wall plate with a saddle for a zip-tie tether from a bracket's tie slit (or a rack upright). | Modelled; not printed or load tested. |
 
 [View the shared-wall bracket in 3D](shared-wall-bracket/README.md#interactive-3d-view), or open any `.stl` under `shared-wall-bracket/models/` for GitHub's built-in viewer.
 
@@ -49,10 +49,11 @@ regenerate.
 Each [release](https://github.com/csmarshall/filament-rack-addon-brackets/releases/latest)
 has two archives:
 
-- `...-print-files.zip`: the STL and 3MF files for every part, with the print
-  settings, disclaimer and licence. Take this one to print.
-- `...-source.zip`: everything in the repository, including the CAD scripts,
-  STEP exports and drawings.
+- `filament-rack-addon-brackets-prints-vX.Y.Z.zip`: for every part, the STL and
+  3MF print files, STEP, the drawing and the README, with the print settings,
+  disclaimer and licences. Take this one to print.
+- `filament-rack-addon-brackets-source-vX.Y.Z.zip`: everything in the
+  repository, including the scripts.
 
 ## Print settings
 
@@ -71,9 +72,7 @@ project. Each part's README has the same table with the reasons.
 | `shared-wall-bracket/` | Source, STL/STEP/3MF models and notes for the shared-wall bracket. |
 | `anti-tip-wall-plate/` | Source and STL/STEP models for the anti-tip wall plate. |
 | `tools/make_u1_project.py` | Packages an STL as a Snapmaker Orca project for the Snapmaker U1. |
-| `tools/make_release.py` | Builds the two release archives. |
 | `PRINT_SETTINGS.md` | Slicer settings for every part, in one place. |
-| `VERSION` | The hand-set major and minor version. |
 | `docs/claude-code-handoff.md` | Project brief with the bracket source inline. |
 
 ## Setup
@@ -86,17 +85,23 @@ pip install -r requirements.txt
 ## Versions
 
 Releases are numbered `MAJOR.MINOR.PATCH`. The patch number goes up
-automatically with every push to `main`. Major and minor are set by hand in
-the [`VERSION`](VERSION) file, for a change that alters how a part fits or is
-used.
+automatically with every change merged to `main`. Major and minor bumps are a
+deliberate manual choice, made by running the Publish workflow by hand, for a
+change that alters how a part fits or is used.
 
 ## Licence
 
 The designs are free to print and remix for non-commercial use, with credit:
-[CC BY-NC-SA 4.0](LICENSE-DESIGNS.md). **Selling these files, or prints made
-from them, needs permission.** The general-purpose tooling in `tools/` is
-[MIT](LICENSE-CODE). [LICENSE.md](LICENSE.md) says which file is under which.
+[CC BY-NC-SA 4.0](LICENSES/CC-BY-NC-SA-4.0.txt). **Selling these files, or prints made
+from them, needs permission.** The scripts and other code are
+[MIT](LICENSES/MIT.txt). [LICENSE.md](LICENSE.md) says which file is under which.
 See also the [disclaimer](DISCLAIMER.md).
+
+**Why these licences:** so that anyone can print these parts and improve on
+them, and nobody sells them as their own. The models are share-alike and
+non-commercial so they stay credited, open and off the marketplaces; the code
+is MIT so it can be reused anywhere. The reasoning is set out in
+[LICENSE.md](LICENSE.md#why-these-licences).
 
 If these parts saved you some filament or a toppled rack, you can
 [buy me a coffee](https://buymeacoffee.com/cs_marshall).

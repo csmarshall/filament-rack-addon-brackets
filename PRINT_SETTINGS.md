@@ -27,11 +27,12 @@ The "where" column is the tab and group in Snapmaker Orca and OrcaSlicer.
 On the plate:
 
 1. Lay the part with its **flat edge on the bed** (the long straight edge, with
-   the legs pointing up). No supports.
+   the legs pointing up). No supports. Installed, the part is the other way up:
+   flat edge on top.
 2. **Rotate it 45 degrees** about the vertical and centre it. It only fits a
    270 mm bed corner to corner, one per plate.
-3. Largest brim that fits a 270 x 270 mm bed: 10 mm for the in-line and
-   staggered brackets, 5 mm for the in-line anchor variant.
+3. A 10 mm brim fits a 270 x 270 mm bed on every version; the staggered
+   brackets are the tightest, leaving 9.2 mm to the bed edge.
 
 ## Anti-tip wall plate
 
