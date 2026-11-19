@@ -49,7 +49,7 @@ def draw(p: Params, out_stem: Path) -> None:
 
     # Front: the +X face, with the bar socket face on. View x = model Y, view y = model Z.
     front = View.at_corner(sheet, project(solid.wrapped, (1, 0, 0), (0, 0, 1)), (x_left, 200.0), SCALE).draw()
-    front.caption("FRONT (+X face)", "bar socket", below=24)
+    front.caption("+X FACE", "bar socket", below=24)
     ys = [0.0, c.upright_y, c.bar_y, c.slit_y, c.size_y]
     for a, b in zip(ys, ys[1:]):
         front.dim_h(a, b, 0, -9)
@@ -63,7 +63,7 @@ def draw(p: Params, out_stem: Path) -> None:
 
     # Top: the upright socket. View x = model Y, view y = -model X.
     top = View.at_corner(sheet, project(solid.wrapped, (0, 0, 1), (-1, 0, 0)), (x_left, 102.0), SCALE).draw()
-    top.caption("TOP", "upright socket", below=17)
+    top.caption("UPRIGHT-SOCKET VIEW", "looking into the socket", below=17)
     top.dim_h(0, c.size_y, -c.size_x, -9)
     top.dim_v(-c.size_x, 0, c.size_y, 9)
     x0, y0, x1, y1 = top.box()
