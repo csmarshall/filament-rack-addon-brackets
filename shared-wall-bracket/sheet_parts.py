@@ -15,6 +15,9 @@ SLIT_DETAIL_PAD = 2.5   # model mm of plastic shown round the slit's mouth in it
 SLIT_NOTE_DROP = 14.0   # sheet mm above a face view where the slit callout sits, level with the socket callout
 
 
+INSTALLED_NOTE = "Installed, the flat edge is on top; the views show the part as printed, flat edge down."
+
+
 def end_labels(sheet, view: View, p: Params, flip: bool = False, drop: float = END_LABEL_DROP) -> None:
     """Name the two ends of the bracket `drop` sheet mm under a view that shows its length: the FRONT END is Y = 0, which faces the room when the rack
     stands against the wall, and the BACK END is Y = length, against the wall. `flip` is for a view from the -X side, where Y runs right to left."""
@@ -144,6 +147,6 @@ def slit_detail(sheet, p: Params, solid: cq.Solid, corner: tuple[float, float], 
 
 def slit_notes(p: Params) -> str:
     """The slits' note line, from the same parameters."""
-    return (f"Tie slits: {len(p.tie_slit_ys)} through the rail, face to face, {fmt(p.tie_slit_height)} x {fmt(p.tie_slit_width)} with rounded ends, "
-            f"{fmt(p.tie_slit_from_end)} from each end, {fmt(p.tie_slit_z)} above the flat edge, {fmt(p.tie_slit_lead_in)} x 45 deg lead-in on both faces. "
-            "Zip tie through either slit to the wall plate. The rail there is no weaker than at a bar socket (checked when the model is built).")
+    return (f"Tie slits: {len(p.tie_slit_ys)}, face to face, {fmt(p.tie_slit_height)} x {fmt(p.tie_slit_width)}, rounded ends, {fmt(p.tie_slit_from_end)} from each end, "
+            f"{fmt(p.tie_slit_z)} above the flat edge, {fmt(p.tie_slit_lead_in)} x 45 deg lead-in both faces. Zip tie through either slit to the wall plate. "
+            "No weaker than a bar socket (checked on every build).")

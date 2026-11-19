@@ -39,7 +39,7 @@ for a full-height wall.
 The script builds three parts and exports STEP + STL: the bracket, a variant
 with a zip-tie saddle on the rear end for wall tethering, and a small fit-test coupon.
 Axes: X = thickness (along the bars), Y = length, Z = height (along the
-uprights), with z=0 on the flat edge. It prints flat edge down, no supports.
+uprights), with z=0 on the flat edge. It prints flat edge down, no supports; installed, the flat edge is on top.
 The bracket is 40 x 305 x 40 mm: two 16 mm bar sockets plus an 8 mm centre web.
 All three STLs came out watertight.
 
@@ -117,8 +117,16 @@ with a 4 mm through-hole, and each pair of opposite bar sockets is joined by a
 
 Coordinate system (also the print orientation: flat edge on the bed):
     X = thickness (direction the horizontal bars run)
-    Y = length, front to back
+    Y = length, front to back; the front end (y=0) faces the room
     Z = height (direction the upright tubes run); z=0 is the flat edge
+
+Installed, the flat edge is on top: the side nearest the bars is the top of a
+bracket, and the legs stand down.  Rolling the part from the printed
+orientation to the installed one turns it over its length axis (Y), so
+x -> -x and z -> -z.  Seen from the room, looking front to back with up up,
+model +X is on the right while printing (flat edge down) but on the LEFT once
+installed.  Everything below that says "+X" or "-X" is in the model frame
+unless it says "installed".
 
 Every bracket has two zip-tie slits through its rail, face to face, for
 tethering the rack to a wall plate (see ../anti-tip-wall-plate).  They are
@@ -193,14 +201,18 @@ class Params:
     # shifts the +X face's sockets along it, so the two sets pass side by side
     # and the bracket only needs to be one socket deep.
     stagger: float = 0.0
-    # Staggered brackets come as a mirror-image pair.  A (mirror=False): facing
-    # the rack, the column on the right sits `face_offset` further back.
-    # B (mirror=True): the column on the left sits further back.  Alternating
-    # A and B along a row keeps it from stepping back at every wall.
+    # Staggered brackets come as a mirror-image pair.  A (mirror=False): the
+    # +X face (model frame) carries the far set of sockets, so the column on
+    # that face sits `face_offset` further back.  Installed, flat edge up, +X is
+    # on the LEFT seen from the room: A sets the column on its left further
+    # back, B (mirror=True) the column on its right.  Alternating A and B
+    # along a row, starting with A at the left, keeps it from stepping back at
+    # every wall and puts both end columns of an odd row against the wall.
     mirror: bool = False
     # Which faces carry bar sockets: -1 is the -X face, +1 the +X face.  A
-    # shared wall has both.  An end wall has one, on +X; the same bracket turned
-    # end for end serves the other end of a row.
+    # shared wall has both.  An end wall has one, on +X (model frame), which
+    # faces LEFT when installed: used as modelled at the RIGHT end of a row, and
+    # turned end for end at the left end.
     bar_faces: tuple = (-1, 1)
     stock_length: float = 305.0      # length of the stock bracket the bar positions are measured on
     fit_clearance: float = 0.3       # added to socket DIAMETER; tune with the coupon
@@ -261,7 +273,7 @@ class Params:
 
     @property
     def bar_y_right(self) -> list:
-        """Bar socket centres on the +X face.
+        """Bar socket centres on the +X face (model frame; installed, the left side).
 
         In line: the same as the -X face.  Staggered: the -X set mirrored end
         for end, so the part is unchanged by turning it round (180 degrees
@@ -270,7 +282,7 @@ class Params:
 
     @property
     def bar_y_left(self) -> list:
-        """Bar socket centres on the -X face."""
+        """Bar socket centres on the -X face (model frame; installed, the right side)."""
         return self._face_sets()[0]
 
     def _face_sets(self):
@@ -338,10 +350,12 @@ class Params:
         It is a printed stand-in for a stock bracket at either end of a row:
         the stock 18 mm width, 16 mm bar sockets with a 2 mm back wall, the
         stock 18 mm rail and fully rounded ends.  The sockets are on the +X
-        face.  One part serves both ends of a row: turned end for end it is
-        the other end's bracket, with its sockets shifted 1 mm along the
-        length (the stock pattern is 26 mm from one end and 27 from the
-        other), as with a stock bracket turned around."""
+        face (model frame), which faces left once the bracket is installed flat
+        edge up.  One part serves both ends of a row: as modelled it is the
+        right end's bracket (sockets facing the row), and turned end for end it
+        is the left end's, with its sockets shifted 1 mm along the length (the
+        stock pattern is 26 mm from one end and 27 from the other), as with a
+        stock bracket turned around."""
         base = cls(**kwargs)
         thickness = base.bar_depth + 2.0
         values = {"thickness": thickness, "plan_round": thickness / 2, "bar_faces": (1,)}

@@ -41,9 +41,9 @@ def draw(out_stem: Path) -> None:
     sheet = Sheet("B")
     x_left = 34.0
 
-    front = sp.face_view(sheet, p, solid, x_left, 200.0, face, ys, SCALE, "FRONT (+X face)", "socket face", full=True)
+    front = sp.face_view(sheet, p, solid, x_left, 200.0, face, ys, SCALE, "FACE +X (model frame)", "socket face; installed, it faces left", full=True)
     top = View.at_corner(sheet, project(solid.wrapped, (0, 0, 1), (-1, 0, 0)), (x_left, 120.0), SCALE).draw()
-    top.caption("TOP", "leg ends; slits hidden", below=TOP_LABEL_DROP)
+    top.caption("LEG-END VIEW", "slits hidden", below=TOP_LABEL_DROP)
     top.dim_v(-T / 2, T / 2, 0, -9)
     sp.slit_position_dims(top, p)
     sp.end_labels(sheet, top, p, drop=TOP_LABEL_DROP)
@@ -60,11 +60,13 @@ def draw(out_stem: Path) -> None:
     sheet_notes = [
         f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
         f"Bar sockets: {len(ys)} on the {side} face only, centred {fmt(p.bar_z)} above the flat edge, {fmt(p.thickness - p.bar_depth)} of plastic behind each.",
-        "One part serves both ends of a row, turned end for end as needed. Turned, its sockets sit at "
+        "One part serves both ends of a row. Installed, its sockets (the +X face, in the model frame) face left: use it as modelled at the right end "
+        "of a row, and turned end for end at the left end. Turned, its sockets sit at "
         f"{', '.join(fmt(y) for y in turned)} from the front end instead of {', '.join(fmt(y) for y in ys)}: a 1 mm shift, "
         "the same as a stock bracket turned around.",
         f"Upright sockets: one from each end of each leg, on the centre line, {fmt(p.divider)} divider between.",
         sp.slit_notes(p),
+        sp.INSTALLED_NOTE,
         "Print flat edge down, no supports. Untested hobby design. No load rating. See DISCLAIMER.md.",
     ]
     bh.finish(sheet, ctx, out_stem, DEFAULT_OUT, title="END BRACKET", number="FRB-003", source="shared-wall-bracket/shared_wall_bracket.py",

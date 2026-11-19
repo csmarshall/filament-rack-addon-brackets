@@ -52,7 +52,7 @@ def draw(p: Params, out_stem: Path) -> None:
 
     # --- Front: looking at a hole face. Model (Y, Z) -> sheet. ---------------------
     front = View(sheet, project(shape, (1, 0, 0), (0, 0, 1)), (x_left, 150.0), SCALE).draw()
-    front.caption("FRONT", "bar-socket face; the back is identical", below=24)
+    front.caption("FACE VIEW", "bar-socket face; the other face is identical", below=24)
     xs = [0.0] + list(p.bar_y) + [L]
     for a, b in zip(xs, xs[1:]):
         front.dim_h(a, b, 0, -9)
@@ -73,7 +73,7 @@ def draw(p: Params, out_stem: Path) -> None:
 
     # --- Top: looking down on the leg ends. ------------------------------------------
     top = View(sheet, project(shape, (0, 0, 1), (-1, 0, 0)), (x_left, 226.0), SCALE).draw()
-    top.caption("TOP", "leg ends; slits hidden", below=14)   # lower than it was, to clear the slit dimensions
+    top.caption("LEG-END VIEW", "slits hidden", below=14)   # lower than it was, to clear the slit dimensions
     sp.slit_position_dims(top, p)
     top.dim_v(-half_t, half_t, 0, -9)
     top.dim_h(0, p.upright_from_end, half_t, 7)
@@ -83,7 +83,7 @@ def draw(p: Params, out_stem: Path) -> None:
 
     # --- Bottom: the flat edge that sits on the print bed. ---------------------------
     bottom = View(sheet, project(shape, (0, 0, -1), (1, 0, 0)), (x_left, 97.0), SCALE).draw()
-    bottom.caption("BOTTOM", "flat edge; print bed face", below=4)
+    bottom.caption("FLAT-EDGE VIEW", "print bed face", below=4)
 
     # --- Right end. -------------------------------------------------------------------
     end_x = x_left + L * SCALE + 46
@@ -139,6 +139,7 @@ def draw(p: Params, out_stem: Path) -> None:
             "Print flat edge down, no supports. 5 wall loops (Arachne), 15% gyroid infill.",
             "Untested hobby design. No load rating. See DISCLAIMER.md.",
             sp.slit_notes(p),
+            sp.INSTALLED_NOTE,
         ],
         readme=Path(__file__).with_name("README.md"), alt="Blueprint of the shared-wall bracket", source_file=Path(__file__).with_name("shared_wall_bracket.py"),
     )

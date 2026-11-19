@@ -41,11 +41,11 @@ def draw(out_stem: Path) -> None:
     sheet = Sheet("B")
     x_left = 34.0
 
-    right = sp.face_view(sheet, p, solid, x_left, 218.0, +1, p.bar_y_right, SCALE, "FRONT (+X face)", "A", full=True)
-    sp.face_view(sheet, p, solid, x_left, 148.0, -1, p.bar_y_left, SCALE, "BACK (-X face)", "A, seen from behind")
+    right = sp.face_view(sheet, p, solid, x_left, 218.0, +1, p.bar_y_right, SCALE, "FACE +X (model frame)", "A; installed, the left side", full=True)
+    sp.face_view(sheet, p, solid, x_left, 148.0, -1, p.bar_y_left, SCALE, "FACE -X (model frame)", "A, seen from behind; installed, the right side")
 
     top = View.at_corner(sheet, project(solid.wrapped, (0, 0, 1), (-1, 0, 0)), (x_left, 104.0), SCALE).draw()
-    top.caption("TOP", "leg ends; slits hidden", below=TOP_LABEL_DROP)
+    top.caption("LEG-END VIEW", "slits hidden", below=TOP_LABEL_DROP)
     top.dim_v(-T / 2, T / 2, 0, -9)
     sp.slit_position_dims(top, p)
     sp.end_labels(sheet, top, p, drop=TOP_LABEL_DROP)
@@ -62,15 +62,16 @@ def draw(out_stem: Path) -> None:
 
     sheet_notes = [
         f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
-        f"Bar sockets: {len(p.bar_y_left)} on each long face, centred {fmt(p.bar_z)} above the flat edge. The two faces' sets are offset "
-        f"{fmt(p.face_offset)} along the bracket, so they pass side by side with {fmt(p.thickness - p.bar_depth)} of plastic behind each.",
-        "B is a true mirror image of A and is printed as its own part. Turning A over does not make B (the bars land at the wrong height), and "
-        "turning it end for end changes nothing. Measured from the front end (the end facing the room), "
-        f"A has -X face sockets at {', '.join(fmt(y) for y in a.bar_y_left)} and +X face at {', '.join(fmt(y) for y in a.bar_y_right)}; "
-        f"B has -X face at {', '.join(fmt(y) for y in b.bar_y_left)} and +X face at {', '.join(fmt(y) for y in b.bar_y_right)}. "
-        "Alternate A and B along a row to zigzag.",
+        f"Bar sockets: {len(p.bar_y_left)} on each face, {fmt(p.bar_z)} above the flat edge; the faces' sets are offset {fmt(p.face_offset)} along the "
+        f"bracket, with {fmt(p.thickness - p.bar_depth)} of plastic behind each.",
+        "B is a true mirror image of A, printed as its own part; no turning of A gives B. "
+        f"Installed, A sets the column on its left {fmt(p.face_offset)} mm further back, B the column on its right. "
+        "An odd row of 3 or more goes A, B, A, B from the left, both end columns against the wall. "
+        f"From the front end, model frame: A has -X sockets at {', '.join(fmt(y) for y in a.bar_y_left)}, +X at {', '.join(fmt(y) for y in a.bar_y_right)}; "
+        f"B the reverse. Installed, +X is the left side.",
         f"Upright sockets: one from each end of each leg, on the centre line, {fmt(p.divider)} divider between.",
         sp.slit_notes(p),
+        sp.INSTALLED_NOTE,
         "Print flat edge down, no supports. Untested hobby design. No load rating. See DISCLAIMER.md.",
     ]
     bh.finish(sheet, ctx, out_stem, DEFAULT_OUT, title="STAGGERED BRACKET A / B", number="FRB-002", source="shared-wall-bracket/shared_wall_bracket.py",
