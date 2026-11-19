@@ -7,7 +7,9 @@ Writes row_of_five_in_line.png and row_of_five_staggered.png.
 
 What is to scale, and where the numbers come from:
 - Bracket sizes, socket positions and the stagger come from the bracket's
-  Params, the same values the models are built from.
+  Params, the same values the models are built from. Which way each A or B
+  steps comes from make_layout_diagram.column_offsets: installed, flat edge
+  up, an A sets the column on its left back.
 - The rack's tier spacing, tier count and bar length are NOT measured.  They
   are taken from the retail listing (9 tiers, 9.9 in apart, 17.3 in wide) and
   can be overridden on the command line.
@@ -30,6 +32,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
 
+from make_layout_diagram import column_offsets
 from shared_wall_bracket import Params
 
 LOG_FORMAT = "%(asctime)s %(levelname)-5s %(name)s: %(message)s"
@@ -47,7 +50,7 @@ class Rack:
     tiers: int = 9
     overall_height: float = 80.3 * INCH  # listed height of the 9-tier rack
     tier_pitch: float = 250.0            # vertical distance between tiers: the listed height
-                                         # less one 40 mm bracket, over the 8 gaps of 9 tiers
+                                         # less one bracket height (Params.height), over the 8 gaps of 9 tiers
     stock_width: float = 17.3 * INCH     # outside width of one stock rack
     stock_thickness: float = 18.0        # a stock bracket
     stock_bar_depth: float = 16.0        # how far a bar seats in a stock bracket
@@ -70,12 +73,7 @@ class Wall:
 
 def build_row(kinds, rack: Rack, inline: Params, stag: Params):
     """Lay out the walls of a row.  `kinds` has one entry per shared wall."""
-    step = stag.face_offset
-    offsets = [0.0]
-    for kind in kinds:
-        offsets.append(offsets[-1] + {"I": 0.0, "A": step, "B": -step}[kind])
-    low = min(offsets)
-    offsets = [o - low for o in offsets]
+    offsets = column_offsets(kinds, stag.face_offset)
 
     walls, spans = [], []
     x = 0.0
@@ -237,8 +235,9 @@ def main() -> None:
     if args.columns < 2:
         raise SystemExit("need at least 2 columns")
 
-    rack = Rack(tiers=args.tiers, tier_pitch=args.tier_pitch, stock_width=args.stock_width)
     inline, stag = Params(), Params.staggered()
+    rack = Rack(tiers=args.tiers, tier_pitch=args.tier_pitch, stock_width=args.stock_width,
+                stock_thickness=inline.stock_thickness, stock_bar_depth=inline.bar_depth)
     n, shared = args.columns, args.columns - 1
     t = rack.tiers
     # What a row uses, against what n stock kits supply (2 brackets per tier,
@@ -251,13 +250,14 @@ def main() -> None:
     a_count, b_count = (shared + 1) // 2, shared // 2
     sheets = [
         ("in_line", f"ROW OF {n}: IN-LINE BRACKETS",
-         "Shared walls 40 mm thick. Every column lines up, front and back.",
+         f"Shared walls {inline.thickness:g} mm thick. Every column lines up, front and back.",
          ["I"] * shared,
-         [f"Print: {shared * t} in-line brackets ({shared} per tier x {t} tiers). Use anchor variants on the top tier.", common]),
+         [f"Print: {shared * t} in-line brackets ({shared} per tier x {t} tiers). Every bracket has two zip-tie slits.", common]),
         ("staggered", f"ROW OF {n}: STAGGERED BRACKETS, A AND B ALTERNATING",
-         f"Shared walls 18 mm thick. Alternate columns sit {stag.face_offset:g} mm further back.",
+         f"Shared walls {stag.thickness:g} mm thick. Installed, flat edge up: A sets the column on its left {stag.face_offset:g} mm back, "
+         f"B the column on its right. A, B, A, B from the left.",
          [("A" if i % 2 == 0 else "B") for i in range(shared)],
-         [f"Print: {a_count * t} A and {b_count * t} B brackets ({a_count} A + {b_count} B per tier x {t} tiers).", common]),
+         [f"Print: {a_count * t} A and {b_count * t} B brackets ({a_count} A + {b_count} B per tier x {t} tiers). Every bracket has two zip-tie slits.", common]),
     ]
     try:
         for stem, title, subtitle, kinds, parts in sheets:

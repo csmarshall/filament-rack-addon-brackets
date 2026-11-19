@@ -90,6 +90,10 @@ use it as modelled at the right end of the row and turned end for end at the
 left end, where its sockets sit 1 mm off (27 mm from the front instead of 26),
 as a stock bracket's do when turned around.
 
+In the staggered layouts some columns stand off the wall. The zip-tie tether
+bridges that gap; add a spacer only if you want every column bearing on the
+wall. `make_layout_diagram.py --columns N` redraws the diagram for any row.
+
 ### Assembly sheets
 
 Top, front and end views of a full nine-tier row of five, with a parts count,
@@ -101,12 +105,13 @@ for each layout:
 
 The brackets and the stagger are to scale, from the model. The rack's tier
 spacing, tier count and width come from the retail listing, not from
-measurement, so treat the overall sizes as approximate. `make_row_sheets.py`
-redraws both, and takes `--columns` and `--tiers`.
-
-In the staggered layouts some columns stand off the wall. The zip-tie tether
-bridges that gap; add a spacer only if you want every column bearing on the
-wall. `make_layout_diagram.py --columns N` redraws the diagram for any row.
+measurement, so treat the overall sizes as approximate. Per row of five and
+tier, the in-line sheet counts 4 in-line brackets and the staggered sheet 2 A
+and 2 B; both use two stock brackets at the ends, and every bracket has the two
+zip-tie slits. Over nine tiers that is 36 in-line brackets, or 18 A and 18 B,
+from five stock kits (18 of 90 stock brackets, 96 of 160 uprights, all 180
+bars). `make_row_sheets.py` redraws both, and takes `--columns` and `--tiers`;
+it shares `make_layout_diagram.py`'s A/B column offsets.
 
 ## Status
 
