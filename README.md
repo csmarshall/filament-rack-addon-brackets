@@ -74,6 +74,7 @@ project. Each part's README has the same table with the reasons.
 | `tools/make_u1_project.py` | Packages an STL as a Snapmaker Orca project for the Snapmaker U1. |
 | `PRINT_SETTINGS.md` | Slicer settings for every part, in one place. |
 | `docs/claude-code-handoff.md` | Project brief with the bracket source inline. |
+| `docs/MAINTAINING.md` | How the repo is run: process, releases, licence map, rebuilding the models. |
 
 ## Setup
 
