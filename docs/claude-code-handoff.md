@@ -40,7 +40,7 @@ The script builds three parts and exports STEP + STL: the bracket, a variant
 with a zip-tie saddle on the rear end for wall tethering, and a small fit-test coupon.
 Axes: X = thickness (along the bars), Y = length, Z = height (along the
 uprights), with z=0 on the flat edge. It prints flat edge down, no supports; installed, the flat edge is on top.
-The bracket is 40 x 305 x 40 mm: two 16 mm bar sockets plus an 8 mm centre web.
+The bracket is 36 x 305 x 40 mm: two 16 mm bar sockets plus a 4 mm centre web.
 All three STLs came out watertight.
 
 The four outer vertical corners are rounded at 10 mm (`plan_round`). That is
@@ -109,8 +109,8 @@ Stock bracket (Hizypaixin 9-tier filament rack, Amazon B0FFZ8SSQX), as measured:
     edge, at 84 mm pitch.  Upright tubes plug into each leg from both ends.
 
 This part is two stock brackets back to back in one piece: same side profile,
-40 mm thick, 16 mm deep bar sockets on BOTH faces with an 8 mm web between, and
-a single centred row of upright sockets, so two rack columns can share one wall.
+36 mm thick, 16 mm deep bar sockets on BOTH faces with a 4 mm web between (the
+same as the 4 mm upright divider), and a single centred row of upright sockets, so two rack columns can share one wall.
 Upright sockets are 18 mm deep and bar sockets 16 mm, as on the stock part; the upright divider is 4 mm
 with a 4 mm through-hole, and each pair of opposite bar sockets is joined by a
 4 mm vent through the web.
@@ -133,7 +133,7 @@ tethering the rack to a wall plate (see ../anti-tip-wall-plate).  They are
 sized so the rail is no weaker there than at its weakest bar socket;
 check_tie_slit_strength measures that on the model whenever a bracket is built.
 
-Two layouts are built.  In line (40 mm thick): the two faces' bar sockets sit
+Two layouts are built.  In line (36 mm thick): the two faces' bar sockets sit
 end to end, and both columns line up front and back.  Staggered (18 mm thick
 like the stock bracket, 320 mm long, with a 27 mm rail): one face's sockets are
 shifted 16 mm along the bracket so the two sets pass side by side; it uses less
@@ -152,6 +152,7 @@ import argparse
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import cadquery as cq
 from OCP.BRepGProp import BRepGProp
@@ -193,9 +194,10 @@ class Params:
     corner_radius: float = 20.0      # curved inside corner between leg and rail
 
     # --- Design choices -------------------------------------------------------
-    # Two 16 mm bar sockets plus an 8 mm centre web.  Bars seat exactly as deep
-    # as in a stock bracket, so column width matches a stock rack.
-    thickness: float = 40.0
+    # Two 16 mm bar sockets plus a 4 mm centre web, the same 4 mm as the upright
+    # divider.  Bars seat exactly as deep as in a stock bracket, so column width
+    # matches a stock rack.
+    thickness: float = 36.0
     # Staggered layout (see Params.staggered): 0 keeps the two faces' bar
     # sockets in line.  A positive value lengthens the bracket by that much and
     # shifts the +X face's sockets along it, so the two sets pass side by side
@@ -219,8 +221,8 @@ class Params:
     chamfer: float = 0.8             # lead-in on socket mouths
     # Rounding is confined to plastic that carries no load: the four outer
     # vertical corners of the legs.  Every socket wall is left at full thickness.
-    plan_round: float = 20.0         # radius on the four outer vertical corners; half the
-                                     # thickness rounds each end off completely, like the stock part
+    plan_round: Optional[float] = None   # radius on the four outer vertical corners; None is half the
+                                         # thickness, which rounds each end off completely, like the stock part
     # Optional light break on the leg and inside-corner edges.  OFF by default:
     # the CAD kernel carries a fillet along every tangent edge, so it runs on
     # across the leg end and along the rail top and shaves 0.1-0.4 mm off the
@@ -234,6 +236,10 @@ class Params:
     tie_slit_lead_in: float = 0.8    # 45 degree lead-in on both faces, as on the sockets
     tie_slit_from_end: float = 60.0  # slit centre from each end
     tie_slit_min_wall: float = 3.0   # solid rail kept above and below the slit's mouth
+
+    def __post_init__(self) -> None:
+        if self.plan_round is None:
+            self.plan_round = self.thickness / 2
 
     @property
     def bore(self) -> float:
@@ -326,10 +332,11 @@ class Params:
 
         The rail is 27 mm tall where the stock rail is 18; the extra height is
         on the side away from the flat edge, between the legs.  A shared wall
-        carries two columns on a rail less than half as wide as the in-line
-        bracket's.  Bending strength goes with width x height^2 and stiffness
-        with width x height^3, so 27 mm matches the in-line rail's strength
-        (18 x 27^2 against 40 x 18^2) and exceeds its stiffness by half."""
+        carries two columns on a rail half as wide as the in-line bracket's
+        (18 mm against 36).  Bending strength goes with width x height^2 and
+        stiffness with width x height^3, so 27 mm exceeds the in-line rail's
+        strength by an eighth (18 x 27^2 against 36 x 18^2) and its stiffness
+        by two thirds."""
         base = cls(**kwargs)
         thickness = bar_depth + back_wall
         values = {
