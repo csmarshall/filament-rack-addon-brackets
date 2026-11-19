@@ -30,9 +30,8 @@ On the plate:
    the legs pointing up). No supports.
 2. **Rotate it 45 degrees** about the vertical and centre it. It only fits a
    270 mm bed corner to corner, one per plate.
-3. A 10 mm brim fits a 270 x 270 mm bed on every version except the anchored
-   staggered brackets, which use 5 mm (a 10 mm brim would leave only 3.9 mm to
-   the bed edge).
+3. A 10 mm brim fits a 270 x 270 mm bed on every version; the staggered
+   brackets are the tightest, leaving 9.2 mm to the bed edge.
 
 ## Anti-tip wall plate
 

@@ -11,7 +11,6 @@ Usage:
     python3 make_blueprint.py                 # writes blueprint.svg and refreshes the README embed
     python3 make_blueprint.py --log-level DEBUG
 """
-import dataclasses
 import logging
 import math
 import sys
@@ -32,8 +31,8 @@ log = logging.getLogger("blueprint")
 SCALE = 0.75   # sheet mm per model mm for the main views
 DETAIL = 1.5   # sheet mm per model mm for the section
 ISO = 0.36     # the isometric is not to scale
-ANCHOR_SCALE = 1.0   # sheet mm per model mm for the anchor detail
-ANCHOR_AT = (272.0, 221.0)   # sheet position of the anchor detail: its left edge, and the bracket centre line
+SLIT_DETAIL = 2.5   # sheet mm per model mm for the tie slit detail
+SLIT_AT = (274.0, 204.0)   # sheet position of the slit detail: the lower-left corner of its window
 DEFAULT_OUT = Path(__file__).with_name("blueprint")  # the README embed is only refreshed for this output
 
 
@@ -74,7 +73,8 @@ def draw(p: Params, out_stem: Path) -> None:
 
     # --- Top: looking down on the leg ends. ------------------------------------------
     top = View(sheet, project(shape, (0, 0, 1), (-1, 0, 0)), (x_left, 226.0), SCALE).draw()
-    top.caption("TOP", "leg ends", below=4)
+    top.caption("TOP", "leg ends; slits hidden", below=14)   # lower than it was, to clear the slit dimensions
+    sp.slit_position_dims(top, p)
     top.dim_v(-half_t, half_t, 0, -9)
     top.dim_h(0, p.upright_from_end, half_t, 7)
     top.leader((L - p.upright_from_end + p.bore / 2 * 0.7, p.bore / 2 * 0.7), (x_left + 150, 255),
@@ -122,17 +122,14 @@ def draw(p: Params, out_stem: Path) -> None:
     iso = View.at_corner(sheet, iso_proj, (end_x + 2, 92.0), ISO).draw(hidden=False, centre_marks=False)
     iso.caption("ISOMETRIC", "not to scale", below=6)
 
-    # --- Anchor detail: the same bracket with the saddle on its rear end, in the free corner between the top view and the section. ---
-    anchored = dataclasses.replace(p, anchor=True)
-    asolid = build_bracket(anchored).val()
-    zc = anchored.saddle_height / 2   # the plan detail's cutting plane, lettered on the END view, which looks at the back end
-    sp.cut_line(sheet, end, (-half_t - sp.REAR_CUT_OVERRUN, zc), (half_t + sp.REAR_CUT_OVERRUN, zc), "B")
+    # --- Tie slit: face detail in the free corner between the top view and the section, and the slits located on the top view. ---
+    sp.slit_detail(sheet, p, solid, SLIT_AT, SLIT_DETAIL, "DETAIL B", callout=False)
+    sp.slit_leader(front, p)
     sp.end_labels(sheet, front, p)
-    sp.anchor_plan(sheet, anchored, asolid, ANCHOR_AT[0], ANCHOR_AT[1], ANCHOR_SCALE, "DETAIL B")
 
     bh.finish(
         sheet, ctx, out_stem, DEFAULT_OUT, title="SHARED-WALL BRACKET", number="FRB-001", source="shared-wall-bracket/shared_wall_bracket.py",
-        for_=bh.FOR_RACK, material="ABS or PETG. Not PLA.", scale=SCALE, detail_scales=(DETAIL, ANCHOR_SCALE) if ANCHOR_SCALE != DETAIL else (DETAIL,),
+        for_=bh.FOR_RACK, material="ABS or PETG. Not PLA.", scale=SCALE, detail_scales=(DETAIL, SLIT_DETAIL),
         notes=[
             f"Tubes are {fmt(p.tube_od)} dia. All sockets are {fmt(p.bore)} dia, {fmt(p.bar_depth)} deep, with a {fmt(p.chamfer)} lead-in.",
             f"Bar sockets: {per_face} on each long face, centred {fmt(p.bar_z)} above the flat edge, {fmt(p.web)} web between opposite pairs"
@@ -141,7 +138,7 @@ def draw(p: Params, out_stem: Path) -> None:
             f"{fmt(p.upright_vent_d)} dia hole through the divider.",
             "Print flat edge down, no supports. 5 wall loops (Arachne), 15% gyroid infill.",
             "Untested hobby design. No load rating. See DISCLAIMER.md.",
-            sp.anchor_notes(anchored),
+            sp.slit_notes(p),
         ],
         readme=Path(__file__).with_name("README.md"), alt="Blueprint of the shared-wall bracket", source_file=Path(__file__).with_name("shared_wall_bracket.py"),
     )

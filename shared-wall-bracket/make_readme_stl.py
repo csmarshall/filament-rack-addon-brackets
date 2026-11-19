@@ -49,7 +49,7 @@ def main() -> None:
     logging.basicConfig(level=args.log_level, format=LOG_FORMAT)
     logging.getLogger("shared_wall_v2").setLevel(logging.WARNING)
 
-    shape = build_bracket(Params(chamfer=0, upright_vent_d=0, bar_vent_d=0, plan_round=0)).val()
+    shape = build_bracket(Params(chamfer=0, upright_vent_d=0, bar_vent_d=0, plan_round=0, tie_slit_lead_in=0)).val()
     verts, tris = shape.tessellate(1.0, 1.0)
     mesh = trimesh.Trimesh(np.array([[p.x, p.y, p.z] for p in verts]), np.array(tris), process=True)
     mesh.fix_normals()
