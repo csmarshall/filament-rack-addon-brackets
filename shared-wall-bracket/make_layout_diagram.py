@@ -4,6 +4,12 @@ Draw a plan view (looking down) of a row of rack columns joined by shared-wall
 brackets, for each bracket layout: in line, staggered A/B alternating, and
 staggered A only.
 
+Left and right are as seen from the room, facing the wall (the wall is at the
+top of the page).  The brackets are drawn as installed, flat edge up: an A
+bracket sets the column on its LEFT further back, a B bracket the column on its
+right.  In the model's own frame (printed flat edge down) A's far-set face is
++X; rolling the part over its length axis puts that face on the left.
+
 The depths, socket positions and stagger come from the bracket's Params, so
 the diagram follows the model.  The column width is schematic: the horizontal
 bars are shortened to fit the page.
@@ -37,10 +43,11 @@ STOCK_THICK = 18.0
 def plan(ax, y_top, title, note, walls, columns, inline: Params, stag: Params):
     """Draw one row.  `walls` is a list of 'I', 'A' or 'B', one per shared wall."""
     step = stag.face_offset
-    # Column offsets: how far back from the front line each column sits.
+    # Column offsets: how far back from the front line each column sits.  Walls are listed left to right as seen from the room.  Installed (flat
+    # edge up), an A wall sets the column on its left further back than the one on its right, and a B wall the other way round.
     offsets = [0.0]
     for kind in walls:
-        offsets.append(offsets[-1] + {"I": 0.0, "A": step, "B": -step}[kind])
+        offsets.append(offsets[-1] + {"I": 0.0, "A": -step, "B": step}[kind])
     low = min(offsets)
     offsets = [o - low for o in offsets]
     depth = inline.stock_length
@@ -114,10 +121,10 @@ def main() -> None:
     rows = [
         ("IN LINE", f"{shared} in-line brackets per tier. Every column lines up, front and back.", ["I"] * shared),
         ("STAGGERED, ALTERNATING A AND B",
-         f"{(shared + 1) // 2} A and {shared // 2} B per tier. Columns alternate {step:g} mm forward and back.",
+         f"{(shared + 1) // 2} A and {shared // 2} B per tier, A at the left. Columns alternate {step:g} mm back and forward.",
          [("A" if i % 2 == 0 else "B") for i in range(shared)]),
         ("STAGGERED, A ONLY",
-         f"{shared} A per tier. Each column sits {step:g} mm further back: {step * shared:g} mm across the row.",
+         f"{shared} A per tier. Each column sits {step:g} mm further back than the one on its right: {step * shared:g} mm across the row.",
          ["A"] * shared),
     ]
     width = 30 + 2 * STOCK_THICK + n * COLUMN_CLEAR + shared * inline.thickness + 110
@@ -142,6 +149,8 @@ def main() -> None:
 
     ax.text(20, 46, f"PLAN VIEW: A ROW OF {n} COLUMNS, LOOKING DOWN. ONE TIER SHOWN; EVERY TIER IS THE SAME.",
             color=INK, fontsize=8, fontfamily=FONT, weight="bold")
+    ax.text(20, 62, "Seen from the room, facing the wall; left and right are the installer's. Brackets are drawn as installed, flat edge up: A sets the "
+                    "column on its left further back, B the column on its right.", color=DIM, fontsize=6.5, fontfamily=FONT)
     ax.text(20, 30, "Yellow: shared-wall brackets. Light blue: stock brackets at the two ends. White lines: the four bars of each column.",
             color=DIM, fontsize=6.5, fontfamily=FONT)
     ax.text(20, 16, "Depth and stagger are to scale; column width is shortened. Arrows mark columns that stand off the wall.",
