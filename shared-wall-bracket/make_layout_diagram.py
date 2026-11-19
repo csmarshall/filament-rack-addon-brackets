@@ -40,16 +40,20 @@ COLUMN_CLEAR = 150.0      # schematic clear width between brackets (real racks a
 STOCK_THICK = 18.0
 
 
-def plan(ax, y_top, title, note, walls, columns, inline: Params, stag: Params):
-    """Draw one row.  `walls` is a list of 'I', 'A' or 'B', one per shared wall."""
-    step = stag.face_offset
-    # Column offsets: how far back from the front line each column sits.  Walls are listed left to right as seen from the room.  Installed (flat
-    # edge up), an A wall sets the column on its left further back than the one on its right, and a B wall the other way round.
+def column_offsets(walls, step: float) -> list:
+    """How far back from the front line each column of a row sits, least 0. `walls` lists the shared walls left to right as seen from the room,
+    each 'I', 'A' or 'B'. Installed (flat edge up), an A wall sets the column on its left further back than the one on its right, and a B wall the
+    other way round. make_row_sheets.py draws its rows from this same function."""
     offsets = [0.0]
     for kind in walls:
         offsets.append(offsets[-1] + {"I": 0.0, "A": -step, "B": step}[kind])
     low = min(offsets)
-    offsets = [o - low for o in offsets]
+    return [o - low for o in offsets]
+
+
+def plan(ax, y_top, title, note, walls, columns, inline: Params, stag: Params):
+    """Draw one row.  `walls` is a list of 'I', 'A' or 'B', one per shared wall."""
+    offsets = column_offsets(walls, stag.face_offset)
     depth = inline.stock_length
     back = max(o + depth for o in offsets)
     front_y = y_top - back - 40          # sheet y of the front line; the wall is at the top
