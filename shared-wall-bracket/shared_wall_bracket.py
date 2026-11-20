@@ -5,8 +5,8 @@ Shared-wall end frame, v2: modelled on the measured stock bracket.
 Stock bracket (Hizypaixin 9-tier filament rack, Amazon B0FFZ8SSQX), as measured:
     305 mm long, 18 mm thick, a straight 18 mm tall rail with one flat edge,
     and an 18 mm long leg at each end that drops to 40 mm with a curved inside
-    corner.  Four bar holes on one face at 84 mm pitch
-    (12 mm tubes on the stock part; this part is drawn for 13 mm tubes).  Upright tubes plug into each leg from both ends.
+    corner.  Four 13 mm bar holes on one face at 84 mm pitch,
+    the near side of each hole 2 mm from the flat edge.  Upright tubes plug into each leg from both ends.
 
 This part is two stock brackets back to back in one piece: same side profile,
 36 mm thick, 16 mm deep bar sockets on BOTH faces with a 4 mm web between (the
@@ -45,8 +45,10 @@ either end of a row; turned end for end it serves the other end.
 
 Usage:
     python3 shared_wall_bracket.py
-    python3 shared_wall_bracket.py --log-level DEBUG --fit-clearance 0.35
-"""
+    python3 shared_wall_bracket.py --log-level DEBUG --fit-clearance 0.15
+
+The 18 mm thick brackets (end, staggered) leave exactly MIN_UPRIGHT_WALL (2.4 mm) beside an upright socket at the
+default 0.2 mm clearance, so --fit-clearance can only go DOWN from 0.2 without making them thicker (a redesign)."""
 
 import argparse
 import logging
@@ -80,7 +82,8 @@ class Params:
     tube_od: float = 13.0            # uprights and bars
     # Bar hole centres sit this far from the flat edge on EVERY bracket: in line, end and staggered.
     # The staggered rail is 27 mm tall, but its bars stay at 9 so the tiers line up across bracket
-    # types.  (On the stock 18 mm rail this is the middle of the rail.)
+    # types.  (On the stock 18 mm rail this is the middle of the rail.)  Stock was measured with the near side
+    # of a bar hole 2 mm from the flat edge, which puts a 13 mm tube's centre at 8.5; ours sit 0.5 mm further in, by design.
     bar_centre_from_flat: float = 9.0
     # Bar hole centres from the front end: first hole starts 20 mm in, 84 mm pitch.
     bar_y: list = field(default_factory=lambda: [26.0, 110.0, 194.0, 278.0])
@@ -310,7 +313,9 @@ class Params:
         if self.bar_z + self.bore / 2 > self.rail_height - 1.0:
             raise ValueError("bar socket breaks out of the top of the rail")
         if self.thickness / 2 - self.bore / 2 < MIN_UPRIGHT_WALL - 1e-9:
-            raise ValueError(f"bracket is too thin to leave {MIN_UPRIGHT_WALL} mm either side of an upright socket")
+            raise ValueError(f"bracket is too thin to leave {MIN_UPRIGHT_WALL} mm either side of an upright socket: "
+                             f"lower fit_clearance (now {self.fit_clearance:g}; at most "
+                             f"{self.thickness - 2 * MIN_UPRIGHT_WALL - self.tube_od:.2f} for this thickness and tube_od) or tube_od")
         if self.edge_round > self.rail_height - (self.bar_z + self.bore / 2) - 2.0:
             raise ValueError("edge_round would thin the wall over a bar socket below 2 mm")
         if self.tie_slit_height > 0:

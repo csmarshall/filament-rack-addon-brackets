@@ -25,8 +25,8 @@ the stock plastic bracket from the listing above. Measure yours before printing:
 - A straight rail 18 mm tall with one flat edge, and an 18 mm long leg at each
   end that drops to 40 mm with a curved inside corner.
 - 13 mm metal tubes for both uprights and horizontal bars.
-- Four bar holes on one face, centred 9 mm from the flat edge, with centres at
-  26, 110, 194 and 278 mm from the end (84 mm pitch).
+- Four bar holes on one face, the near side of each hole 2 mm from the flat edge (a 13 mm tube's centre is then 8.5 mm from it), with centres at
+  26, 110, 194 and 278 mm from the end (84 mm pitch). Our brackets centre the bars at 9 mm by design, 0.5 mm further from the flat edge than stock.
 - An upright socket in each leg from both ends: one opens on the flat edge, one
   on the leg end, centred in the leg.
 - Upright sockets are 18 mm deep and bar sockets 16 mm. The two upright sockets in a leg are separated by
