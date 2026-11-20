@@ -5,14 +5,14 @@ A short note for whoever (or whichever session) works on this next. The [README]
 ## The parts today
 
 - **In-line bracket**: 36 x 305 x 40 mm, bar sockets on both faces with a 4 mm web between, fully rounded ends. One design.
-- **Staggered brackets A and B**: 18 mm wide (the stock width), 27 mm rail, a mirror-image pair. Neighbouring columns stand 16 mm apart front to back.
+- **Staggered brackets A and B**: 18 mm wide (the stock width), 27 mm rail, a mirror-image pair. Neighbouring columns stand 18 mm apart front to back.
 - **End bracket**: one design for either end of a row, sockets on one face. Used as modelled at the right end, turned end for end at the left.
 - **Fit test coupon** and the **anti-tip wall plate**.
 - Every bracket has two zip-tie slits through its rail, for a tether to the wall plate. There are no anchor variants and no left/right end brackets.
 
 ## Orientation
 
-Brackets are described as installed: **flat edge up**, seen from the room facing the wall. The models and drawings show the part as printed, flat edge down. Installed, A sets the column on its left 16 mm further back and B the column on its right; a staggered row is A, B, A, B from the left, so columns 1, 3 and 5 sit nearer the wall. `shared_wall_bracket.Params` is the source of every dimension, and `make_layout_diagram.py` shows the row.
+Brackets are described as installed: **flat edge up**, seen from the room facing the wall. The models and drawings show the part as printed, flat edge down. Installed, A sets the column on its left 18 mm further back and B the column on its right; a staggered row is A, B, A, B from the left, so columns 1, 3 and 5 sit nearer the wall. `shared_wall_bracket.Params` is the source of every dimension, and `make_layout_diagram.py` shows the row.
 
 ## Process
 
@@ -39,7 +39,7 @@ The 3MF files are not rebuilt by CI. Regenerate them whenever an STL changes, an
 ## What is not verified
 
 - **Nothing has been printed and nothing has been load tested.** Every strength figure is a section-property ratio from the model, not a test result.
-- The fit coupon is still to be printed, so socket clearance (12.3 mm for a 12 mm tube) is untested.
+- Socket clearance (13.2 mm bore for a 13.0 mm tube) comes from a printed gauge (2026-11-19, Snapmaker U1, PolyLite ABS 260/100 C: a firm push fit in both directions, 13.6 loose), not from the brackets. The production fit coupon itself is still to be printed.
 - The `.3mf` projects pass a strict 3MF read and slice in Snapmaker Orca's command line, but nobody has confirmed the settings carry in when a project is opened in the GUI (File > Open Project, not Import).
 - The upright socket centre (9 mm from the end) and the 20 mm inside corner radius are judged from photos, not measured.
 - The rack's tier spacing, tier count and width come from the retail listing, not measurement.

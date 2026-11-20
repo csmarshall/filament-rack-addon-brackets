@@ -22,18 +22,18 @@ up nine stock brackets and a set of uprights from the second kit.
 
 | | In line | Staggered |
 |---|---|---|
-| Size | 36 x 305 x 40 mm | 18 x 320 x 40 mm (the stock bracket's width) |
+| Size | 36 x 305 x 40 mm | 18 x 322 x 40 mm (the stock bracket's width) |
 | Rail height | 18 mm, as stock | 27 mm |
 | Ends | Fully rounded, a 20 mm radius across the whole width | Fully rounded around the upright sockets, as stock |
-| Bar sockets | 16 mm deep, as measured on the stock part; the two faces end to end with a 4 mm web between, as thick as the upright divider | 16 mm deep, as measured on the stock part; one face's set is shifted 16 mm along the bracket so the two pass side by side |
-| Columns | Line up front and back | Neighbouring columns stand 16 mm apart front to back |
+| Bar sockets | 16 mm deep, as measured on the stock part; the two faces end to end with a 4 mm web between, as thick as the upright divider | 16 mm deep, as measured on the stock part; one face's set is shifted 18 mm along the bracket so the two pass side by side |
+| Columns | Line up front and back | Neighbouring columns stand 18 mm apart front to back |
 | Parts | One design | A mirror-image pair, A and B; one end bracket for either end of a row |
-| Solid volume | 195 cm3 | 138 cm3 |
-| Printed, estimated (ABS, 5 walls, 15% infill) | about 114 g (scaled from the volume) | about 98 g |
+| Solid volume | 191.5 cm3 | 134.8 cm3 |
+| Printed, estimated (ABS, 5 walls, 15% infill) | about 112 g (scaled from the volume) | about 96 g |
 | Rail bending strength, vertical | 1.00 | 1.13 |
 | Rail stiffness, vertical | 1.00 | 1.69 |
 | Rail stiffness, sideways | 1.00 | 0.19 |
-| Wall around upright sockets | 2.85 mm at the end, 9.5 mm at the sides | 2.85 mm all round, as stock |
+| Wall around upright sockets (13.2 mm bore) | 2.4 mm at the end, 11.4 mm at the sides | 2.4 mm all round |
 
 **Why the staggered rail is taller.** A shared wall carries two columns. The
 staggered rail is half as wide as the in-line one (18 mm against 36), and
@@ -43,12 +43,12 @@ where the stock rail is 18: 18 x 27 squared is 12% more than 36 x 18 squared.
 exactly; the in-line bracket is now 36 wide, so the staggered rail has margin.)
 The extra 9 mm is on the
 side away from the flat edge, in the open space between the two legs. The bar
-sockets stay 8 mm from the flat edge and the upright divider does not move, so
+bar centres stay 9 mm from the flat edge and the upright divider does not move, so
 bars and tiers still line up with the stock walls.
 
 **Where the staggered bracket is not as strong.** Sideways it is much less
-stiff, and its upright sockets have the stock 2.85 mm wall all round where the
-in-line bracket has 9.5 mm at the sides. The bars brace the wall sideways and
+stiff, and its upright sockets have a 2.4 mm wall all round (13.2 mm bore) where the
+in-line bracket has 11.4 mm at the sides. The bars brace the wall sideways and
 the stock brackets work with that same wall, but the in-line bracket has more
 margin. These figures are section-property ratios, not test results; neither
 layout has been load tested.
@@ -56,7 +56,7 @@ layout has been load tested.
 **Staggered A and B.** Installed, the flat edge is on top: the side nearest the
 bars is the top of a bracket, and the legs stand down (the models and drawings
 show the part as printed, flat edge down). Seen from the room, an A bracket
-sets the column on its left 16 mm further back; a B bracket sets the column on
+sets the column on its left 18 mm further back; a B bracket sets the column on
 its right further back. A and B are mirror images, so no way of turning an A
 gives a B; turning a bracket end for end changes nothing. Use the B models.
 
@@ -75,14 +75,14 @@ stock brackets at the ends:
 
 - **In line:** 4 in-line brackets. Every column lines up.
 - **Staggered, alternating:** A, B, A, B from the left, 2 A and 2 B. Columns 1,
-  3 and 5 sit 16 mm back, against the wall; columns 2 and 4 stand 16 mm out.
-- **Staggered, A only:** 4 A. Each column steps a further 16 mm back than the
-  one on its right, 64 mm across the row.
+  3 and 5 sit 18 mm back, against the wall; columns 2 and 4 stand 18 mm out.
+- **Staggered, A only:** 4 A. Each column steps a further 18 mm back than the
+  one on its right, 72 mm across the row.
 
 **Staggered rows: use an odd number of columns, three or more.** Alternate
 the brackets so every tier has the same number of A and B. The two end columns
 then stand the same distance from the wall. With an even number of columns, or
-with two columns on a single bracket, one end of the row sits 16 mm further
+with two columns on a single bracket, one end of the row sits 18 mm further
 out than the other. Start with A at the left (A, B, A, B, ...), as seen from
 the room, so the end columns are the ones nearest the wall; that is where the
 end brackets go. An end bracket's sockets face left once it is installed, so
@@ -117,8 +117,7 @@ it shares `make_layout_diagram.py`'s A/B column offsets.
 
 - Geometry is built from caliper measurements of a stock bracket (see the
   [top-level README](../README.md#does-your-rack-match)).
-- **Socket fit is untested.** Sockets are 12.3 mm for a 12 mm tube. Print
-  `models/fit_test_coupon_v2.stl` first and adjust `--fit-clearance`.
+- **Socket size comes from a test print; the brackets themselves have not been printed.** Sockets are 13.2 mm for a 13.0 mm tube. A printed gauge (Snapmaker U1, PolyLite ABS, nozzle 260 C, bed 100 C) gave a firm push fit at CAD 13.2 on a 13.0 mm tube in both the bar and the upright direction, and 13.6 was loose. That is one printer, one filament and one print, so print `models/fit_test_coupon_v2.stl` first and adjust `--fit-clearance` if yours differs. Nothing has been load tested.
 - Two values are judged from photos, not measured: the 20 mm inside corner
   radius and the upright socket centre at 9 mm from the end.
 - The `.3mf` projects were generated by script and pass a strict 3MF read, but
@@ -203,8 +202,8 @@ one shares its leg height, bar socket position and divider.
   the upright divider.
 - A 4 mm vent runs through the web between each pair of opposite bar sockets,
   like the hole in the upright divider, so a bar is not pushed in against
-  trapped air. The bar still seats on the web, with 4.15 mm of plastic around the
-  vent (12.3 mm socket, 4 mm vent).
+  trapped air. The bar still seats on the web, with 4.6 mm of plastic around the
+  vent (13.2 mm socket, 4 mm vent).
 - The upright divider is 4 mm to match the stock part. It sets tier height, so
   it must not change, or the centre wall drifts out of level with the outer
   walls on every tier.
@@ -212,7 +211,7 @@ one shares its leg height, bar socket position and divider.
   every bar sits in a stock bracket.
 - Seen from above, each end is rounded off completely, like the stock part: a
   18 mm radius across the 36 mm width. The wall at the tip of the upright
-  socket is still 2.85 mm, and the bar sockets all open on the straight sides.
+  socket is 2.4 mm, and the bar sockets all open on the straight sides.
 
 ## Tie slits
 
@@ -221,8 +220,8 @@ by 3.2 mm, rounded top and bottom, through the rail from face to face and
 centred 40 mm from each end on the in-line and end brackets (60 mm on the
 staggered bracket, where the other face's first bar socket sits further in),
 halfway up the rail. Each slit keeps 3 mm of solid plastic between its mouth
-and the nearest bar socket's mouth: that needs 38.35 mm from the front end and
-39.35 mm from the back (the stock pattern puts the last socket 27 mm from its
+and the nearest bar socket's mouth: that needs 38.8 mm from the front end and
+39.8 mm from the back (the stock pattern puts the last socket 27 mm from its
 end), so 40 mm. The slit is still behind the first bar on its face, so a tie
 pulled toward the wall passes over or under that bar. Each mouth has a 0.8 mm
 45 degree lead-in on both faces, like the sockets. A tie up to 7.6 x 1.9 mm
@@ -287,8 +286,7 @@ The `.3mf` projects in `models/` carry all of this, but only when opened with
   one per plate. Clear to the bed edge: in line 21.9 mm, staggered 19.2 mm, end
   brackets 24.5 mm. With the 10 mm brim in the project files they clear the bed
   edge by 11.9, 9.2 and 14.5 mm.
-- 5 wall loops with the Arachne wall generator, so the 1.85, 2.85 and 3.85 mm
-  socket walls print as solid perimeters.
+- 5 wall loops with the Arachne wall generator, so the 2.4 mm socket walls (bar hole to flat edge and rail top, upright side wall, upright to bracket end) print as solid perimeters.
 - 15% gyroid infill and 5 bottom shell layers. See
   [Why these settings](#why-these-settings).
 - **Not PLA.** The bracket is under constant load, and PLA slowly deforms
@@ -307,7 +305,7 @@ the Classic wall generator, 15% grid infill and 3 bottom shell layers.
 | Wall loops | 2 | 5 | Calculated. Each socket wall gets loops from both faces, so loops needed = (wall / 2) / line width. At the stock 0.42 mm outer and 0.45 mm inner line widths, 5 loops fill the thickest socket wall (3.85 mm). |
 | Wall generator | Classic | Arachne | Varies line width to close the slivers a fixed-width wall would leave. |
 | Infill pattern | Grid | Gyroid | Documented. The [OrcaSlicer patterns page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_patterns.html) says grid's overlapping points may cause noise or artifacts, and describes gyroid as isotropic, with curved geometry that helps reduce warping. |
-| Bottom shell layers | 3 | 5 | Precaution, not documented behaviour. The [shells page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_top_bottom_shells.html) says more shell layers increase part strength. The specific aim is to make the 1.85 mm wall between the bed face and each bar socket print fully solid; check that in the slicer preview. |
+| Bottom shell layers | 3 | 5 | Precaution, not documented behaviour. The [shells page](https://www.orcaslicer.com/wiki/print_settings/strength/strength_settings_top_bottom_shells.html) says more shell layers increase part strength. The specific aim is to make the 2.4 mm wall between the bed face and each bar socket print fully solid; check that in the slicer preview. |
 | Brim | Slicer default | Outer, 10 mm | A long ABS part lifts at the ends. The width is what fits inside the bed margin. |
 
 With 5 wall loops the walls carry nearly all the load, so the infill choice is
