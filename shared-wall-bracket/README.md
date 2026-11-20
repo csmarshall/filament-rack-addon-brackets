@@ -3,7 +3,11 @@
 Lets two columns of the rack stand side by side and share one centre wall,
 instead of standing as two separate towers.
 
-![Preview](preview.png)
+<!-- blueprint-preview:preview -->
+[![The in-line, staggered A and B, and end brackets](preview.svg)](preview.svg)
+
+<sub>Preview generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<!-- /blueprint-preview -->
 
 An interactive 3D view is [at the bottom of this page](#interactive-3d-view).
 GitHub also shows a rotatable viewer when you open any file in `models/` ending in `.stl`.

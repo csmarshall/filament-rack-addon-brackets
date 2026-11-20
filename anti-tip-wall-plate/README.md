@@ -6,7 +6,11 @@ side the tie goes through one of the
 [shared-wall brackets' tie slits](../shared-wall-bracket/#tie-slits), or
 straight around a steel upright.
 
-![Preview](preview.png)
+<!-- blueprint-preview:preview -->
+[![The anti-tip wall plate](preview.svg)](preview.svg)
+
+<sub>Preview generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<!-- /blueprint-preview -->
 
 > **Use at your own risk.** This is not a tested or certified tip-over
 > restraint. It has not been printed or load tested, and no load rating is
