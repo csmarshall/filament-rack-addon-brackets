@@ -5,8 +5,8 @@ Shared-wall end frame, v2: modelled on the measured stock bracket.
 Stock bracket (Hizypaixin 9-tier filament rack, Amazon B0FFZ8SSQX), as measured:
     305 mm long, 18 mm thick, a straight 18 mm tall rail with one flat edge,
     and an 18 mm long leg at each end that drops to 40 mm with a curved inside
-    corner.  Four 12 mm bar holes on one face, starting 2 mm in from the flat
-    edge, at 84 mm pitch.  Upright tubes plug into each leg from both ends.
+    corner.  Four 13 mm bar holes on one face at 84 mm pitch,
+    the near side of each hole 2 mm from the flat edge.  Upright tubes plug into each leg from both ends.
 
 This part is two stock brackets back to back in one piece: same side profile,
 36 mm thick, 16 mm deep bar sockets on BOTH faces with a 4 mm web between (the
@@ -35,9 +35,9 @@ check_tie_slit_strength measures that on the model whenever a bracket is built.
 
 Two layouts are built.  In line (36 mm thick): the two faces' bar sockets sit
 end to end, and both columns line up front and back.  Staggered (18 mm thick
-like the stock bracket, 320 mm long, with a 27 mm rail): one face's sockets are
-shifted 16 mm along the bracket so the two sets pass side by side; it uses less
-plastic, but the two columns stand 16 mm apart front to back.  The staggered bracket comes as a mirror-image pair, A
+like the stock bracket, 322 mm long, with a 27 mm rail): one face's sockets are
+shifted 18 mm along the bracket so the two sets pass side by side; it uses less
+plastic, but the two columns stand 18 mm apart front to back.  The staggered bracket comes as a mirror-image pair, A
 and B, so a row can alternate them and zigzag instead of stepping back.
 
 The end bracket (Params.end) is a single-sided stand-in for the stock bracket at
@@ -45,8 +45,10 @@ either end of a row; turned end for end it serves the other end.
 
 Usage:
     python3 shared_wall_bracket.py
-    python3 shared_wall_bracket.py --log-level DEBUG --fit-clearance 0.35
-"""
+    python3 shared_wall_bracket.py --log-level DEBUG --fit-clearance 0.15
+
+The 18 mm thick brackets (end, staggered) leave exactly MIN_UPRIGHT_WALL (2.4 mm) beside an upright socket at the
+default 0.2 mm clearance, so --fit-clearance can only go DOWN from 0.2 without making them thicker (a redesign)."""
 
 import argparse
 import logging
@@ -58,6 +60,10 @@ import cadquery as cq
 from OCP.BRepGProp import BRepGProp
 from OCP.GProp import GProp_GProps
 
+# Thinnest plastic allowed beside an upright socket (leg side wall, and the socket to the bracket's rounded end).
+# Chosen 2026-11-20: at the 13.2 mm bore every socket wall is 2.4 mm (bar hole to flat edge and rail top, leg side
+# wall, upright socket to bracket end), and 2.4 mm prints as solid perimeters with 5 Arachne walls.
+MIN_UPRIGHT_WALL = 2.4
 LOG_FORMAT = "%(asctime)s %(levelname)-5s %(name)s: %(message)s"
 log = logging.getLogger("shared_wall_v2")
 
@@ -73,8 +79,12 @@ class Params:
     rail_height: float = 18.0        # height of the rail between the legs
     leg_length: float = 18.0         # how far each leg runs along the length
     stock_thickness: float = 18.0    # one stock bracket (reference only)
-    tube_od: float = 12.0            # uprights and bars
-    bar_edge_offset: float = 2.0     # flat edge to the near side of a bar hole
+    tube_od: float = 13.0            # uprights and bars
+    # Bar hole centres sit this far from the flat edge on EVERY bracket: in line, end and staggered.
+    # The staggered rail is 27 mm tall, but its bars stay at 9 so the tiers line up across bracket
+    # types.  (On the stock 18 mm rail this is the middle of the rail.)  Stock was measured with the near side
+    # of a bar hole 2 mm from the flat edge, which puts a 13 mm tube's centre at 8.5; ours sit 0.5 mm further in, by design.
+    bar_centre_from_flat: float = 9.0
     # Bar hole centres from the front end: first hole starts 20 mm in, 84 mm pitch.
     bar_y: list = field(default_factory=lambda: [26.0, 110.0, 194.0, 278.0])
     upright_depth_flat: float = 18.0  # upright socket depth from the flat edge
@@ -117,7 +127,9 @@ class Params:
     # turned end for end at the left end.
     bar_faces: tuple = (-1, 1)
     stock_length: float = 305.0      # length of the stock bracket the bar positions are measured on
-    fit_clearance: float = 0.3       # added to socket DIAMETER; tune with the coupon
+    # Added to the socket DIAMETER.  Measured 2026-11-19 with a printed gauge: CAD 13.2 gives a firm push fit
+    # on a 13.0 tube, U1, PolyLite ABS 260/100 C, both hole directions; 13.6 was loose.
+    fit_clearance: float = 0.2
     chamfer: float = 0.8             # lead-in on socket mouths
     # Rounding is confined to plastic that carries no load: the four outer
     # vertical corners of the legs.  Every socket wall is left at full thickness.
@@ -134,9 +146,9 @@ class Params:
     # How far in the slits go is set by the first bar socket they must clear:
     # slit centre >= socket centre + bore/2 + chamfer (the socket's mouth edge)
     # + tie_slit_socket_wall + half the slit's width at the face.  For the first
-    # socket at 26 that is 26 + 6.15 + 0.8 + 3 + 2.4 = 38.35, so 40 mm for the
+    # socket at 26 that is 26 + 6.6 + 0.8 + 3 + 2.4 = 38.8, so 40 mm for the
     # in-line and end brackets.  The staggered bracket has a second face's socket
-    # at 42 (limit 54.35 mm) and keeps 60 (set in Params.staggered).  validate()
+    # at 44 (limit 56.8 mm) and keeps 60 (set in Params.staggered).  validate()
     # enforces the rule on whatever value is used.
     tie_slit_height: float = 9.0     # along Z; the slit is rounded top and bottom
     tie_slit_width: float = 3.2      # along Y; clears a 1.9 mm thick tie, and is the end-round diameter
@@ -155,7 +167,7 @@ class Params:
 
     @property
     def bar_z(self) -> float:
-        return self.bar_edge_offset + self.tube_od / 2
+        return self.bar_centre_from_flat
 
     @property
     def tie_slit_z(self) -> float:
@@ -216,7 +228,7 @@ class Params:
         """The corner radius actually cut.
 
         Half the thickness (or more) rounds each end off completely, as on the
-        stock bracket.  That is allowed when it leaves at least 2.5 mm around
+        stock bracket.  That is allowed when it leaves at least MIN_UPRIGHT_WALL (2.4 mm) around
         the upright socket: the round's centre sits on the bracket's centre
         line, half a thickness in from the end, so the thinnest plastic is
         between the socket and the arc along that line.  Otherwise the radius
@@ -224,19 +236,21 @@ class Params:
         half = self.thickness / 2
         if self.plan_round >= half - 0.01:
             wall = half - abs(half - self.upright_from_end) - self.bore / 2
-            if wall >= 2.5:
+            if wall >= MIN_UPRIGHT_WALL - 1e-9:
                 return half - 0.05      # a hair under half, so a sliver of flat end face remains
         return max(0.0, min(self.plan_round, half - self.bore / 2 - 3.0, self.leg_length - 2.0))
 
     @classmethod
-    def staggered(cls, stagger: float = 15.0, back_wall: float = 2.0, bar_depth: float = 16.0,
+    def staggered(cls, stagger: float = 17.0, back_wall: float = 2.0, bar_depth: float = 16.0,
                   rail_height: float = 27.0, **kwargs) -> "Params":
         """Parameters for the thin, staggered bracket.
 
         It matches the stock bracket's 18 mm width and fully rounded ends: the
         bar sockets are 16 mm deep, as measured on the stock part, with a 2 mm
-        back wall.  15 mm of extra length puts the two faces' sockets 16 mm
-        apart, leaving 3.7 mm of plastic between neighbouring 12.3 mm sockets.
+        back wall.  17 mm of extra length puts the two faces' sockets 18 mm
+        apart (the stock pattern is 26 mm from one end and 27 from the other, so
+        face_offset is stagger + 1), leaving 4.8 mm of plastic between
+        neighbouring 13.2 mm sockets.
 
         The rail is 27 mm tall where the stock rail is 18; the extra height is
         on the side away from the flat edge, between the legs.  A shared wall
@@ -255,7 +269,7 @@ class Params:
             "rail_height": rail_height,
             "corner_radius": min(base.corner_radius, base.height - rail_height),
             "plan_round": thickness / 2,
-            "tie_slit_from_end": kwargs.get("tie_slit_from_end", 60.0),   # the second face's first socket (centre 42) pushes the slits in
+            "tie_slit_from_end": kwargs.get("tie_slit_from_end", 60.0),   # the second face's first socket (centre 44) pushes the slits in
         }
         return cls(**{**kwargs, **values})
 
@@ -298,8 +312,10 @@ class Params:
             raise ValueError("corner_radius is larger than the step between rail and leg")
         if self.bar_z + self.bore / 2 > self.rail_height - 1.0:
             raise ValueError("bar socket breaks out of the top of the rail")
-        if self.thickness / 2 - self.bore / 2 < 2.5:
-            raise ValueError("bracket is too thin to leave 2.5 mm either side of an upright socket")
+        if self.thickness / 2 - self.bore / 2 < MIN_UPRIGHT_WALL - 1e-9:
+            raise ValueError(f"bracket is too thin to leave {MIN_UPRIGHT_WALL} mm either side of an upright socket: "
+                             f"lower fit_clearance (now {self.fit_clearance:g}; at most "
+                             f"{self.thickness - 2 * MIN_UPRIGHT_WALL - self.tube_od:.2f} for this thickness and tube_od) or tube_od")
         if self.edge_round > self.rail_height - (self.bar_z + self.bore / 2) - 2.0:
             raise ValueError("edge_round would thin the wall over a bar socket below 2 mm")
         if self.tie_slit_height > 0:
@@ -451,7 +467,7 @@ def build_bracket(p: Params) -> cq.Workplane:
     if p.edge_round > 0:
         try:
             # Leg-top edges, except the two that run across the thickness
-            # (end edge and inner edge): those border the 2.85 mm walls
+            # (end edge and inner edge): those border the 2.4 mm walls
             # around the upright socket mouth, so they stay square.
             edges = [e for f in body.faces(">Z").vals() for e in f.Edges()
                      if abs(e.Center().x) > p.thickness / 2 - plan_round - 0.5]

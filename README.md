@@ -24,9 +24,9 @@ the stock plastic bracket from the listing above. Measure yours before printing:
 - 305 mm long, 18 mm thick.
 - A straight rail 18 mm tall with one flat edge, and an 18 mm long leg at each
   end that drops to 40 mm with a curved inside corner.
-- 12 mm metal tubes for both uprights and horizontal bars.
-- Four bar holes on one face, 2 mm in from the flat edge, with centres at
-  26, 110, 194 and 278 mm from the end (84 mm pitch).
+- 13 mm metal tubes for both uprights and horizontal bars.
+- Four bar holes on one face, the near side of each hole 2 mm from the flat edge (a 13 mm tube's centre is then 8.5 mm from it), with centres at
+  26, 110, 194 and 278 mm from the end (84 mm pitch). Our brackets centre the bars at 9 mm by design, 0.5 mm further from the flat edge than stock.
 - An upright socket in each leg from both ends: one opens on the flat edge, one
   on the leg end, centred in the leg.
 - Upright sockets are 18 mm deep and bar sockets 16 mm. The two upright sockets in a leg are separated by
@@ -39,7 +39,7 @@ regenerate.
 
 | Part | What it does | Status |
 |---|---|---|
-| [Shared-wall bracket](shared-wall-bracket/) | Joins two or more racks into one unit with shared centre walls. Two layouts: in line (36 mm thick) and staggered (18 mm thick, the stock width). | Modelled from measurements; socket fit not yet test-printed. |
+| [Shared-wall bracket](shared-wall-bracket/) | Joins two or more racks into one unit with shared centre walls. Two layouts: in line (36 mm thick) and staggered (18 mm thick, the stock width). | Modelled from measurements; socket size from a test print; brackets not yet printed or load tested. |
 | [Anti-tip wall plate](anti-tip-wall-plate/) | Wall plate with a saddle for a zip-tie tether from a bracket's tie slit (or a rack upright). | Modelled; not printed or load tested. |
 
 [View the shared-wall bracket in 3D](shared-wall-bracket/README.md#interactive-3d-view), or open any `.stl` under `shared-wall-bracket/models/` for GitHub's built-in viewer.

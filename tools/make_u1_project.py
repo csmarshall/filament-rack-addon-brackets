@@ -31,8 +31,8 @@ PROCESS = "0.20mm Standard @Snapmaker U1 (0.4 nozzle)"
 FILAMENT_SLOT_1 = "Generic ABS @U1 0.4 nozzle"
 FILAMENT_OTHER_SLOTS = "Generic PLA @U1 0.4 nozzle"   # the U1 system default
 
-# Process overrides.  Walls: 5 loops with Arachne, so every socket wall (1.85,
-# 2.85 and 3.85 mm) prints as solid perimeters at the stock 0.42 / 0.45 mm
+# Process overrides.  Walls: 5 loops with Arachne, so every socket wall (2.4 mm at
+# the 13.2 mm bore: bar hole to flat edge and rail top, leg side wall, upright to bracket end) prints as solid perimeters at the stock 0.42 / 0.45 mm
 # line widths.  Brim: an outer brim to hold a long ABS part down; its width is
 # set per file from --brim-width because it has to fit inside the bed margin.
 PROCESS_OVERRIDES = {
@@ -43,7 +43,7 @@ PROCESS_OVERRIDES = {
     # perpendicular lines whose overlapping points may cause noise or artifacts,
     # and gyroid as isotropic, with curves that help reduce warping.
     "sparse_infill_pattern": "gyroid",
-    # 5 bottom layers (1.0 mm) in place of 3, as a precaution for the 1.85 mm
+    # 5 bottom layers (1.0 mm) in place of 3, as a precaution for the 2.4 mm
     # wall between the bed face and each bar socket.
     "bottom_shell_layers": "5",
     "brim_type": "outer_only",

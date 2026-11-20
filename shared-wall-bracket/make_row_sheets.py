@@ -54,7 +54,7 @@ class Rack:
     stock_width: float = 17.3 * INCH     # outside width of one stock rack
     stock_thickness: float = 18.0        # a stock bracket
     stock_bar_depth: float = 16.0        # how far a bar seats in a stock bracket
-    tube: float = 12.0
+    tube: float = Params().tube_od       # the tube diameter the brackets are drawn for
 
     @property
     def bar_length(self) -> float:
@@ -151,7 +151,7 @@ def draw_sheet(title, subtitle, kinds, rack: Rack, inline: Params, stag: Params,
             ax.add_patch(Rectangle((fx + w.x + w.thickness / 2 - rack.tube / 2, fy + z0 + inline.height),
                                    rack.tube, z1 - z0 - inline.height, fc=TUBE, ec="none", alpha=0.85))
         ax.add_patch(Rectangle((fx + w.x + w.thickness / 2 - rack.tube / 2, fy), rack.tube, foot, fc=TUBE, ec="none", alpha=0.85))
-    bar_z = inline.height - inline.bar_z          # legs down: bars hang 8 mm below the flat top edge
+    bar_z = inline.height - inline.bar_z          # legs down: bars hang bar_z (9 mm) below the flat top edge
     for x0, x1, _ in spans:
         for z in levels:
             ax.add_patch(Rectangle((fx + x0, fy + z + bar_z - rack.tube / 2), x1 - x0, rack.tube, fc=TUBE, ec="none", alpha=0.85))
