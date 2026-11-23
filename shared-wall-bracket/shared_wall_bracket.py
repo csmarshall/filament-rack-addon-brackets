@@ -52,7 +52,7 @@ default 0.2 mm clearance, so --fit-clearance can only go DOWN from 0.2 without m
 
 import argparse
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -67,6 +67,14 @@ MIN_UPRIGHT_WALL = 2.4
 LOG_FORMAT = "%(asctime)s %(levelname)-5s %(name)s: %(message)s"
 log = logging.getLogger("shared_wall_v2")
 
+# The stock bracket: four bar holes, the first 26 mm from the front end, 84 mm apart, 305 mm long.  A bracket with
+# fewer bars keeps the first holes where they are and is shorter by one pitch per bar dropped (see Params.bars).
+STOCK_BARS = 4
+STOCK_LENGTH = 305.0
+FIRST_BAR_Y = 26.0
+BAR_PITCH = 84.0
+MIN_BARS = 2
+
 SECTION_SLAB = 0.2         # thickness of the slice a cross-section is measured on, mm
 SECTION_TOLERANCE = 1e-6   # relative slack so equal sections are not failed by rounding
 
@@ -74,7 +82,11 @@ SECTION_TOLERANCE = 1e-6   # relative slack so equal sections are not failed by 
 @dataclass
 class Params:
     # --- Measured on the stock bracket ---------------------------------------
-    length: float = 305.0            # overall, front to back
+    # How many bar holes the bracket has, 2 to 4.  Derives bar_y, length and stock_length unless they are given: the
+    # first `bars` stock positions, and the stock length less one pitch per bar dropped.  3 gives bar_y [26, 110, 194]
+    # on a 221 mm bracket.
+    bars: int = STOCK_BARS
+    length: Optional[float] = None   # overall, front to back; None derives it from bars
     height: float = 40.0             # full height at the legs
     rail_height: float = 18.0        # height of the rail between the legs
     leg_length: float = 18.0         # how far each leg runs along the length
@@ -85,8 +97,8 @@ class Params:
     # types.  (On the stock 18 mm rail this is the middle of the rail.)  Stock was measured with the near side
     # of a bar hole 2 mm from the flat edge, which puts a 13 mm tube's centre at 8.5; ours sit 0.5 mm further in, by design.
     bar_centre_from_flat: float = 9.0
-    # Bar hole centres from the front end: first hole starts 20 mm in, 84 mm pitch.
-    bar_y: list = field(default_factory=lambda: [26.0, 110.0, 194.0, 278.0])
+    # Bar hole centres from the front end: first hole starts 20 mm in, 84 mm pitch.  None derives them from bars.
+    bar_y: Optional[list] = None
     upright_depth_flat: float = 18.0  # upright socket depth from the flat edge
     upright_depth_leg: float = 18.0   # upright socket depth from the leg end
     upright_vent_d: float = 4.0       # small through-hole in the divider, as on the stock part
@@ -126,7 +138,7 @@ class Params:
     # faces LEFT when installed: used as modelled at the RIGHT end of a row, and
     # turned end for end at the left end.
     bar_faces: tuple = (-1, 1)
-    stock_length: float = 305.0      # length of the stock bracket the bar positions are measured on
+    stock_length: Optional[float] = None   # length of the bracket the bar positions are measured on; None derives it from bars
     # Added to the socket DIAMETER.  Measured 2026-11-19 with a printed gauge: CAD 13.2 gives a firm push fit
     # on a 13.0 tube, U1, PolyLite ABS 260/100 C, both hole directions; 13.6 was loose.
     fit_clearance: float = 0.2
@@ -158,6 +170,13 @@ class Params:
     tie_slit_min_wall: float = 3.0   # solid rail kept above and below the slit's mouth
 
     def __post_init__(self) -> None:
+        dropped = STOCK_BARS - self.bars
+        if self.bar_y is None:
+            self.bar_y = [FIRST_BAR_Y + BAR_PITCH * i for i in range(self.bars)]
+        if self.stock_length is None:
+            self.stock_length = STOCK_LENGTH - BAR_PITCH * dropped
+        if self.length is None:
+            self.length = self.stock_length
         if self.plan_round is None:
             self.plan_round = self.thickness / 2
 
@@ -292,6 +311,8 @@ class Params:
         return cls(**{**kwargs, **values})
 
     def validate(self) -> None:
+        if not MIN_BARS <= self.bars <= STOCK_BARS:
+            raise ValueError(f"bars must be {MIN_BARS} to {STOCK_BARS}, not {self.bars}")
         if self.divider < 1.0:
             raise ValueError(f"upright sockets leave a {self.divider:.1f} mm divider; need >= 1 mm")
         if self.bar_vent_d >= self.bore:
@@ -661,6 +682,11 @@ def main() -> None:
         for letter, mirror in (("a", False), ("b", True)):
             export(build_bracket(Params.staggered(**stag, mirror=mirror)), args.out, f"shared_wall_bracket_staggered_{letter}")
         export(build_bracket(Params.end(**base)), args.out, "end_bracket")
+        three = {**base, "bars": 3}
+        export(build_bracket(Params(**three)), args.out, "shared_wall_bracket_3bar")
+        for letter, mirror in (("a", False), ("b", True)):
+            export(build_bracket(Params.staggered(**{**stag, "bars": 3}, mirror=mirror)), args.out, f"shared_wall_bracket_staggered_3bar_{letter}")
+        export(build_bracket(Params.end(**three)), args.out, "end_bracket_3bar")
     except ValueError as exc:
         log.error("Invalid parameters: %s", exc)
         raise SystemExit(2)
