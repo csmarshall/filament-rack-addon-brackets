@@ -73,7 +73,7 @@ STOCK_BARS = 4
 STOCK_LENGTH = 305.0
 FIRST_BAR_Y = 26.0
 BAR_PITCH = 84.0
-MIN_BARS = 2
+MIN_BARS = 3   # two bars leave the in-line and end brackets failing check_tie_slit_strength
 
 SECTION_SLAB = 0.2         # thickness of the slice a cross-section is measured on, mm
 SECTION_TOLERANCE = 1e-6   # relative slack so equal sections are not failed by rounding
@@ -84,7 +84,9 @@ class Params:
     # --- Measured on the stock bracket ---------------------------------------
     # How many bar holes the bracket has, 2 to 4.  Derives bar_y, length and stock_length unless they are given: the
     # first `bars` stock positions, and the stock length less one pitch per bar dropped.  3 gives bar_y [26, 110, 194]
-    # on a 221 mm bracket.
+    # on a 221 mm bracket.  The derived bar_y, length and stock_length are stored as ordinary fields, so a copy made
+    # with dataclasses.replace or asdict keeps them: changing bars on such a copy has no effect unless bar_y, length
+    # and stock_length are passed as None too.
     bars: int = STOCK_BARS
     length: Optional[float] = None   # overall, front to back; None derives it from bars
     height: float = 40.0             # full height at the legs
@@ -311,8 +313,15 @@ class Params:
         return cls(**{**kwargs, **values})
 
     def validate(self) -> None:
+        if isinstance(self.bars, bool) or not isinstance(self.bars, int):
+            raise ValueError(f"bars must be an integer, not {self.bars!r}")
         if not MIN_BARS <= self.bars <= STOCK_BARS:
             raise ValueError(f"bars must be {MIN_BARS} to {STOCK_BARS}, not {self.bars}")
+        if len(self.bar_y) != self.bars:
+            raise ValueError(f"bars is {self.bars} but bar_y has {len(self.bar_y)} positions")
+        for y in self.bar_y:
+            if y - self.bore / 2 < 0 or y + self.bore / 2 > self.length:
+                raise ValueError(f"bar socket at y={y} is not fully inside the {self.length:g} mm bracket")
         if self.divider < 1.0:
             raise ValueError(f"upright sockets leave a {self.divider:.1f} mm divider; need >= 1 mm")
         if self.bar_vent_d >= self.bore:

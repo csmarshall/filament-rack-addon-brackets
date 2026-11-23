@@ -221,10 +221,10 @@ Every bracket also comes in a 3-bar version, for a rack 84 mm shallower. It drop
 - Each tier holds one fewer spool position.
 - A 3-bar row needs 3-bar brackets at every wall, the ends included: stock 305 mm brackets cannot be mixed in. Print the 3-bar end bracket for the row ends.
 - The bar positions stay measured from the same end as on the stock part (26 mm from one end, 27 from the other), so the 3-bar end bracket still turns end for end.
-- At 221 mm the part fits a 270 mm bed straight, without the 45 degree turn the 305 mm brackets need.
+- At 221 mm (in-line and end) and 238 mm (staggered) every 3-bar part fits a 270 mm bed straight, without the 45 degree turn the 305 mm brackets need.
 - The anti-tip wall plate does not depend on bracket length.
 
-The files are `models/shared_wall_bracket_3bar.*`, `models/shared_wall_bracket_staggered_3bar_a.*` and `_b.*`, and `models/end_bracket_3bar.*`. In `shared_wall_bracket.py` it is one parameter, `Params(bars=3)` (also `Params.staggered(bars=3)` and `Params.end(bars=3)`), which derives the bar positions and length from the stock pattern (84 mm pitch, 305 mm stock length); `bars` must be 2 to 4. `python3 test_bars.py` checks the derived numbers.
+The files are `models/shared_wall_bracket_3bar.*`, `models/shared_wall_bracket_staggered_3bar_a.*` and `_b.*`, and `models/end_bracket_3bar.*`. In `shared_wall_bracket.py` it is one parameter, `Params(bars=3)` (also `Params.staggered(bars=3)` and `Params.end(bars=3)`), which derives the bar positions and length from the stock pattern (84 mm pitch, 305 mm stock length); `bars` must be 3 or 4. `python3 test_bars.py` checks the derived numbers.
 
 ## Tie slits
 
