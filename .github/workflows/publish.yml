@@ -17,6 +17,12 @@ on:
 permissions:
   contents: write
 
+# Merges that land close together queue instead of racing to push the re-render and cut a release (#40). Never cancel a
+# running publish: it may be part way through tagging a release.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   blueprint:
     uses: csmarshall/common-blueprint-generator/.github/workflows/render.yml@v1
@@ -25,7 +31,7 @@ jobs:
       # CLI: the in-line, staggered, end bracket and coupon sheets in shared-wall-bracket, and the wall plate sheet in anti-tip-wall-plate.
       # cadquery brings its own OCP 7.9; the generator is installed without the ocp extra so it uses that one.
       render-command: >-
-        uv venv -q .venv &&
+        uv venv -q --clear .venv &&
         uv pip install -q --python .venv -r requirements.txt "$BLUEPRINT_PACKAGE" &&
         (cd shared-wall-bracket &&
         ../.venv/bin/python make_blueprint.py &&
