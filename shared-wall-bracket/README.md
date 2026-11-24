@@ -6,7 +6,7 @@ instead of standing as two separate towers.
 <!-- blueprint-preview:preview -->
 [![The in-line, staggered A and B, and end brackets](preview.svg)](preview.svg)
 
-<sub>Preview generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Preview generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint-preview -->
 
 An interactive 3D view is [at the bottom of this page](#interactive-3d-view).
@@ -160,7 +160,7 @@ anti-tip kit: on the top tier, run a zip tie through a slit and through the
 <!-- blueprint:blueprint -->
 [![Blueprint of the shared-wall bracket](blueprint.svg)](blueprint.svg)
 
-<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint -->
 
 Top, front, bottom and end views, a section through a bar socket, an
@@ -177,7 +177,7 @@ tie slit. B is A's mirror image and is described on the sheet, not drawn.
 <!-- blueprint:blueprint_staggered -->
 [![Blueprint of the staggered bracket, A and B](blueprint_staggered.svg)](blueprint_staggered.svg)
 
-<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint -->
 
 ### End bracket
@@ -188,7 +188,7 @@ both ends of a row.
 <!-- blueprint:blueprint_end -->
 [![Blueprint of the end bracket](blueprint_end.svg)](blueprint_end.svg)
 
-<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint -->
 
 ### Fit test coupon
@@ -196,7 +196,7 @@ both ends of a row.
 <!-- blueprint:blueprint_coupon -->
 [![Blueprint of the fit-test coupon](blueprint_coupon.svg)](blueprint_coupon.svg)
 
-<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Drawing generated from `shared_wall_bracket.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint -->
 
 ## Design

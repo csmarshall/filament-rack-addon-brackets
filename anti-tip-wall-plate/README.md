@@ -9,7 +9,7 @@ straight around a steel upright.
 <!-- blueprint-preview:preview -->
 [![The anti-tip wall plate](preview.svg)](preview.svg)
 
-<sub>Preview generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Preview generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint-preview -->
 
 > **Use at your own risk.** This is not a tested or certified tip-over
@@ -49,7 +49,7 @@ ASA.
 <!-- blueprint:blueprint -->
 [![Blueprint of the anti-tip wall plate](blueprint.svg)](blueprint.svg)
 
-<sub>Drawing generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Drawing generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint -->
 
 Profile, plan, end and isometric views, projected from the CAD model with the
