@@ -6,7 +6,11 @@ side the tie goes through one of the
 [shared-wall brackets' tie slits](../shared-wall-bracket/#tie-slits), or
 straight around a steel upright.
 
-![Preview](preview.png)
+<!-- blueprint-preview:preview -->
+[![The anti-tip wall plate](preview.svg)](preview.svg)
+
+<sub>Preview generated from `wall_plate.py` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<!-- /blueprint-preview -->
 
 > **Use at your own risk.** This is not a tested or certified tip-over
 > restraint. It has not been printed or load tested, and no load rating is
@@ -59,6 +63,7 @@ whenever the model changes.
 | `wall_plate.py` | Parametric CadQuery source. |
 | `make_blueprint.py` | Draws `blueprint.svg`. |
 | `blueprint.svg` | Dimensioned drawing, generated on [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator). |
+| `make_preview.py`, `preview.svg` | The header image at the top of this page, drawn by common-blueprint-generator's `preview()`; the Publish workflow redraws it. |
 | `models/anti_tip_wall_plate.stl` / `.step` | The plate: 60 x 22 mm, 14.2 mm tall. |
 
 ## Regenerating
@@ -67,4 +72,5 @@ whenever the model changes.
 python3 wall_plate.py                                   # writes models/
 python3 wall_plate.py --tie-width 4.8 --tie-thickness 1.4
 python3 make_blueprint.py                               # redraws blueprint.svg and the embed above
+python3 make_preview.py                                 # redraws preview.svg, the header image
 ```
